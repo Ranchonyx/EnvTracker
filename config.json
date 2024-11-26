@@ -1,0 +1,13 @@
+{
+  "Logging": {
+    "timestampFormat": "ISO-8601",
+    "logDirectoryPath": "./logs/"
+  },
+  "MariaDB": {
+    "database": "envtracker",
+    "user": "envtrackuser",
+    "host": "localhost",
+    "password": "zorro250",
+    "connectionLimit": 5
+  }
+}

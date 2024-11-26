@@ -1,0 +1,30 @@
+{
+  "name": "env-tracker",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "express": "^4.21.1",
+    "express-session": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "mariadb": "^3.4.0",
+    "node-cron": "^3.0.3",
+    "typescript": "^5.6.3",
+    "ws": "^8.18.0"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/express-session": "^1.18.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node-cron": "^3.0.11",
+    "@types/ws": "^8.5.13"
+  }
+}
