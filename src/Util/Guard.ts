@@ -1,7 +1,3 @@
-declare interface ErrorConstructor {
-	captureStackTrace?: (_p: any, _d: any) => void;
-}
-
 class GuardError extends Error {
 	constructor(pMessage: string) {
 		super(pMessage);
@@ -40,18 +36,3 @@ export class Guard {
 		Guard.AgainstNullish(expr);
 	}
 }
-
-
-/*
-* compare(x).greater(y)
-* */
-function compare(expr: boolean) {
-	return {
-		greater: (expr0: boolean) => expr > expr0,
-		greaterEq: (expr0: boolean) => expr >= expr0,
-		less: (expr0: boolean) => expr < expr0,
-		lessEq: (expr0: boolean) => expr <= expr0,
-		equal: (expr0: boolean) => expr === expr0
-	}
-}
-

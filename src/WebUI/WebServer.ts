@@ -10,6 +10,8 @@ import session, {Store} from "express-session"
 import AuthTokenStore from "./AuthTokenStore.js";
 import ws, {WebSocketServer} from "ws"
 import {clearInterval} from "node:timers";
+import {crc32} from "node:zlib";
+import compression from "compression";
 
 function sha512(str: string): string {
 	return createHash("sha512").update(str).digest("hex");
@@ -21,7 +23,7 @@ export default class WebServer {
 	private readonly log: RegisteredLogger;
 
 	private readonly mdb_api: MariaDBConnector;
-	private readonly login_page_string = `<!DOCTYPE html> <html lang="en_GB"> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width,minimum-scale=1"> <title>Login</title> <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"> <style> * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "segoe ui", roboto, oxygen, ubuntu, cantarell, "fira sans", "droid sans", "helvetica neue", Arial, sans-serif; font-size: 16px; } body { background-color: #435165; } .login { width: 400px; background-color: #ffffff; box-shadow: 0 0 9px 0 rgba(0, 0, 0, 0.3); margin: 100px auto; } .login h1 { text-align: center; color: #5b6574; font-size: 24px; padding: 20px 0 20px 0; border-bottom: 1px solid #dee0e4; } .login form { display: flex; flex-wrap: wrap; justify-content: center; padding-top: 20px; } .login form label { display: flex; justify-content: center; align-items: center; width: 50px; height: 50px; background-color: #3274d6; color: #ffffff; } .login form input[type="password"], .login form input[type="text"] { width: 310px; height: 50px; border: 1px solid #dee0e4; margin-bottom: 20px; padding: 0 15px; } .login form input[type="submit"] { width: 100%; padding: 15px; margin-top: 20px; background-color: #3274d6; border: 0; cursor: pointer; font-weight: bold; color: #ffffff; transition: background-color 0.2s; } .login form input[type="submit"]:hover { background-color: #2868c7; transition: background-color 0.2s; } </style> </head> <body> <div class="login"> <h1>Login</h1> <form action="/auth" method="post"> <label for="username"> <i class="fas fa-user"></i> </label> <input type="text" name="username" placeholder="Benutzername" id="username" required> <label for="password"> <i class="fas fa-lock"></i> </label> <input type="password" name="password" placeholder="Passwort" id="password" required> <input type="submit" value="Login"> </form> </div> </body> </html>`;
+	private readonly login_page_string = `<!DOCTYPE html><html lang="de_DE"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,minimum-scale=1"><title>Login</title><link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css"><style> * {box-sizing: border-box;font-family: -apple-system, BlinkMacSystemFont, "segoe ui", roboto, oxygen, ubuntu, cantarell, "fira sans", "droid sans", "helvetica neue", Arial, sans-serif;font-size: 16px;}  body {background-color: #435165;}  .login {width: 400px;background-color: #fafaf5;box-shadow: 0 0 9px 0 rgba(0, 0, 0, 0.3);margin: 100px auto;}  .login h1 {text-align: center;color: #5b6574;font-size: 24px;padding: 20px 0 20px 0;border-bottom: 1px solid #dee0e4;}  .login form {display: flex;flex-wrap: wrap;justify-content: center;padding-top: 20px;}  .login form label {display: flex;justify-content: center;align-items: center;width: 50px;height: 50px;background-color: #1d808f;color: #fafaf5;}  .login form input[type="password"], .login form input[type="text"] {width: 310px;height: 50px;border: 1px solid #dee0e4;margin-bottom: 20px;padding: 0 15px;}  .login form input[type="submit"] {width: 100%;padding: 15px;margin-top: 20px;background-color: #1d808f;border: 0;cursor: pointer;font-weight: bold;color: #fafaf5;transition: background-color 0.2s;}  .login form input[type="submit"]:hover {background-color: #2fcae8;transition: background-color 0.2s;} </style></head><body><div class="login"><h1>EnvTrack - Einloggen</h1><form action="/auth" method="post"><label for="username"> <i class="fas fa-user"></i> </label> <input type="text" name="username" placeholder="Benutzername" id="username" required><label for="password"> <i class="fas fa-lock"></i> </label> <input type="password" name="password" placeholder="Passwort" id="password" required> <input type="submit" value="Login"></form></div></body></html>`;
 	private readonly homepage: string;
 	private readonly wsTokenStore: AuthTokenStore;
 	private readonly wsServer: ws.Server;
@@ -35,7 +37,11 @@ export default class WebServer {
 		this.homepage = pHomePath;
 		this.wsTokenStore = pAuthTokenStore;
 
-		this.app.use(json());
+		this.app.use(compression())
+		this.app.use(json({limit: "50mb"}));
+		this.app.set("etag", (body: Buffer) => {
+			return `R//${crc32(body).toString(16)}//`
+		});
 
 		this.sessionParser =
 			session({
@@ -53,7 +59,7 @@ export default class WebServer {
 		this.app.use(express.urlencoded({extended: true}));
 
 		this.app.use(async (req, res, next) => {
-			Guard.CastAs<Record<"loggedIn" | "username", any>>(req.session)
+			Guard.CastAs<Record<"loggedIn" | "username", any>>(req.session);
 
 			//routen, die kein auth benötigen
 			const openRoutes = ["/auth", "/"]
@@ -87,7 +93,7 @@ export default class WebServer {
 			const passwordHash = sha512(password);
 
 			if (username && password && passwordHash) {
-				const dbResult = await this.mdb_api.QuerySafe(`SELECT hash FROM credentials WHERE hash = (?) AND id = (?)`, [passwordHash, username]);
+				const dbResult = await this.mdb_api.QuerySafe(`SELECT hash FROM credential WHERE hash = (?) AND id = (?)`, [passwordHash, username]);
 				Guard.AgainstNullish(dbResult);
 
 				if (!(dbResult.length > 0))
@@ -180,6 +186,13 @@ export default class WebServer {
 
 					this.isAlive = true;
 				});
+
+				const _log = this.log.bind(this);
+				socket.on("close", function (code, reason) {
+					_log(`WebSocket ${request.socket.remoteAddress}:${request.socket.remotePort} has closed the connection.`);
+					this.terminate();
+
+				})
 
 				this.wsServer.emit("connection", socket, request);
 			});

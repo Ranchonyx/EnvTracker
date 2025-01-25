@@ -23,7 +23,7 @@ export default class Logger {
         this.config = pConfig;
     }
     Destroy() {
-        for (const [id, fstream] of this.RegisteredLoggers.entries()) {
+        for (const [id] of this.RegisteredLoggers.entries()) {
             this.destroyLoggerById(id);
         }
         console.info(`Logger destroyed.`);
@@ -45,6 +45,12 @@ export default class Logger {
         fstream.write(`${content || ""}${EOL}`);
         nextTick(() => fstream.uncork());
     }
+    createMany(prefixes, level = LogLevel.INFO, silent = false) {
+        const loggerMap = new Map;
+        for (const prefix of prefixes)
+            loggerMap.set(prefix, this.createLogger(prefix, level, silent));
+        return loggerMap;
+    }
     createLogger(basePrefix, level = LogLevel.INFO, silent = false) {
         const targetTSF = this.config?.timestampFormat;
         const formatISO = targetTSF === "ISO-8601";
@@ -55,9 +61,28 @@ export default class Logger {
         const fWrite = (content) => {
             this.writeLogFile(myLogID, content);
         };
-        const noop = (...args) => {
+        const noop = (..._args) => {
         };
         const logWriteFn = shouldWriteLog ? fWrite : noop;
+        function makeAsync(fn) {
+            return (fmt) => setImmediate(() => fn(fmt));
+        }
+        const logPrintFn = (arg, level) => {
+            switch (level) {
+                case LogLevel.DEBUG:
+                case LogLevel.INFO:
+                    console.info(arg);
+                    break;
+                case LogLevel.WARN:
+                    console.warn(arg);
+                    break;
+                case LogLevel.ERROR:
+                    console.error(arg);
+                    break;
+                default:
+                    throw new Error(`[LOGGER] ${LogLevel[level]} `);
+            }
+        };
         const loggerFn = (message, ...optionalParams) => {
             if (silent)
                 return;
@@ -73,6 +98,8 @@ export default class Logger {
                     case "undefined":
                         return `${param}`;
                     case "object":
+                        if (param instanceof Buffer)
+                            return "Binary " + param.toString("hex");
                         return JSON.stringify(param);
                     case "symbol":
                         return `${param.toString()}`;
@@ -83,20 +110,7 @@ export default class Logger {
                 }
             }).join(' ');
             logWriteFn(fmt);
-            switch (level) {
-                case LogLevel.DEBUG:
-                case LogLevel.INFO:
-                    console.info(fmt);
-                    break;
-                case LogLevel.WARN:
-                    console.warn(fmt);
-                    break;
-                case LogLevel.ERROR:
-                    console.error(fmt);
-                    break;
-                default:
-                    throw new Error(`[LOGGER] ${LogLevel[level]} `);
-            }
+            logPrintFn(fmt, level);
         };
         const destroyLoggerFn = () => {
             this.destroyLoggerById(myLogID);

@@ -29,16 +29,4 @@ export class Guard {
         Guard.AgainstNullish(expr);
     }
 }
-/*
-* compare(x).greater(y)
-* */
-function compare(expr) {
-    return {
-        greater: (expr0) => expr > expr0,
-        greaterEq: (expr0) => expr >= expr0,
-        less: (expr0) => expr < expr0,
-        lessEq: (expr0) => expr <= expr0,
-        equal: (expr0) => expr === expr0
-    };
-}
 //# sourceMappingURL=Guard.js.map

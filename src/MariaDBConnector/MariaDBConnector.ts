@@ -3,6 +3,7 @@ import {MariaDBConnectorConfigSpec} from "./types/MariaDBConnector.js";
 import {EOL} from "node:os";
 import {Guard} from "../Util/Guard.js";
 import {RegisteredLogger} from "../Logger/Logger.js";
+import {debuglog} from "node:util";
 
 export default class MariaDBConnector {
 	private static instance: MariaDBConnector | undefined;
