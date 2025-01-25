@@ -1,0 +1,20 @@
+<!--
+{
+    StationName: string;
+    StationLocation: string;
+    StationDescription: string;
+    StationBattery: number;
+    StationGuid: string;
+}
+-->
+<div class="card d-flex flex-row align-items-center p-3 station-element" style="margin: 10px 0 10px 0;" data-guid="<%= StationGuid %>">
+    <div class="icon-container rounded d-flex justify-content-center align-items-center me-3 station-icon">
+        <img src="images/station-icon.png" alt="Station Icon" class="img-fluid station-icon rounded" style="max-width: 120px; background: <%= ImageColour %>">
+    </div>
+    <div class="flex-grow-1">
+        <h6 class="mb-0"><%= StationName %></h6>
+        <p class="mb-0 text-success"><%= StationLocation %></p>
+        <p class="mb-0 text-success"><%= StationDescription %></p>
+    </div>
+    <span class="badge bg-success align-self-start"><%= StationBattery > 0 ? "aktiv" : "inaktiv" %></span>
+</div>
