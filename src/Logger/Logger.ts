@@ -172,7 +172,7 @@ export default class Logger {
 		if (!existsSync(myLogDir))
 			mkdirSync(myLogDir, {recursive: true});
 
-		const wStreamOrNull: WriteStream | null = shouldWriteLog ? createWriteStream(join(myLogDir, `${LogLevel[level]}_${new Date().toLocaleDateString()}`), {
+		const wStreamOrNull: WriteStream | null = shouldWriteLog ? createWriteStream(join(myLogDir, `${LogLevel[level]}_${new Date().toLocaleDateString("de-DE")}`), {
 			encoding: "utf8",
 			flags: "a"
 		}) : null;
