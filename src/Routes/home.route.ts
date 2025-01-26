@@ -23,7 +23,7 @@ router.get("/", async (req, res) => {
 	const tenantId = await tenantService.GetTenantId(req);
 	Guard.AgainstNullish(tenantId);
 
-	const stationsMeta = await stationService.QueryStations(tenantId);
+	const stationsMeta = await stationService.QueryStationsForTenant(tenantId);
 	const meta = stationsMeta.map(e => Object({ImageColour: generatePastelColor(), ...e}));
 	const rendered = await renderingService.Render("pages/home", {stations: meta.reverse()});
 

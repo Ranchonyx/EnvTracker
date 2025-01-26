@@ -4,8 +4,10 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "run": "set NODE_ENV=production && set NODE_DEBUG=true && node ./dist/src/index.js --config config.json",
-    "dev": "npm run build && npm run run"
+    "run-dev": "node ./dist/src/index.js --config config.json",
+    "dev": "npm run build && npm run run-dev",
+    "run-prod": "set NODE_ENV=production && node ./dist/src/index.js --config config.json",
+    "prod": "npm run build && npm run run-prod"
   },
   "keywords": [],
   "author": "",

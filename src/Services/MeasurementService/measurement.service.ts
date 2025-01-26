@@ -23,6 +23,17 @@ export default class Service {
 		return isoString.replace(/[TZ]/gm, " ").trim();
 	}
 
+	private Convert<T extends AllMeasurementType, U extends AllMeasurementUnit>(pMeasurements: Array<Measurement<T, U>>): Array<Measurement<T, U>> {
+		return pMeasurements.map(m => {
+			return {
+				timestamp: m.timestamp,
+				unit: m.unit,
+				name: m.name,
+				value: parseFloat("" + m.value)
+			};
+		})
+	}
+
 	public async QueryMeasurementsOfType<T extends AllMeasurementType, U extends AllMeasurementUnit>(station_guid: string, rows: number | "all", ...types: Array<T>): Promise<Array<Measurement<T, U>>> {
 		const constraint = types
 			.map(type => `'${type}'`)
@@ -53,22 +64,10 @@ export default class Service {
 		if (!response || response.length === 0)
 			return [];
 
-		return response;
+		return this.Convert(response);
 	}
 
 	public async QueryMeasurementsOfTypeInDateRange<T extends AllMeasurementType, U extends AllMeasurementUnit>(station_guid: string, pType: AllMeasurementType | "all", ISOStart?: string, ISOEnd?: string, groupedBy?: "HOUR" | "MINUTE" | "HOUR_AND_MINUTE"): Promise<Array<Measurement<T, U>>> {
-/*
-		function formatGroupingClause(): string {
-			switch (groupedBy) {
-				case "HOUR":
-					break;
-				case "MINUTE":
-					break;
-				case "HOUR_AND_MINUTE":
-					break;
-			}
-		}
-*/
 		const whereClauseOrEmptyString = ISOStart && ISOEnd
 			? `where CAST(timestamp as datetime) between '${this.ToMDBDate(ISOStart)}' and '${this.ToMDBDate(ISOEnd)}'`
 			: "";
@@ -122,7 +121,7 @@ export default class Service {
 		if (!response || response.length === 0)
 			return [];
 
-		return response;
+		return this.Convert(response);
 	}
 
 	public async QueryLatestMeasurementsOfType<T extends AllMeasurementType, U extends AllMeasurementUnit>(station_guid: string, ...types: Array<T>): Promise<Array<Measurement<T, U>>> {

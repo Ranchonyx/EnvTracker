@@ -1,73 +1,169 @@
 import {RegisteredLogger} from "../../Logger/Logger.js";
 import MariaDBConnector from "../../MariaDBConnector/MariaDBConnector.js";
-import tf, {Sequential, Tensor2D} from "@tensorflow/tfjs-node"
-import {Measurement} from "../../WebUI/DBResponses.js";
-import {AllMeasurementType, AllMeasurementUnit} from "../../Util/MeasurementUtil.js";
-import {Guard} from "../../Util/Guard.js";
+import tf, {Sequential, Tensor} from "@tensorflow/tfjs-node"
 import {existsSync} from "node:fs";
+import {schedule, ScheduledTask} from "node-cron";
+import {Guard} from "../../Util/Guard.js";
 import MeasurementService from "../../Services/MeasurementService/measurement.service.js";
+import StationService from "../../Services/StationService/station.service.js";
 
-export default class Service {
-	private static instance: Service | undefined;
-	private model: Sequential | undefined;
+export default class PredictionServiceRegistry {
+	private static instance: PredictionServiceRegistry | undefined;
 
-	private constructor(private log: RegisteredLogger, private mariadb: MariaDBConnector, private modelPath: string) {
+	private constructor(private log: RegisteredLogger, private mariadb: MariaDBConnector, private modelDirectory: string) {
 	}
 
-	public static async GetInstance(log?: RegisteredLogger, mariadb?: MariaDBConnector, modelPath?: string): Promise<Service> {
-		let _instance: Service | undefined = Service.instance;
-		if (!_instance && log && mariadb && modelPath) {
+	public static async GetInstance(log?: RegisteredLogger, mariadb?: MariaDBConnector, modelDirectory?: string) {
+		if (!this.instance && log && mariadb && modelDirectory) {
+			this.instance = new PredictionServiceRegistry(log, mariadb, modelDirectory);
 			log("Init");
 
-			Service.instance = new Service(log, mariadb, modelPath);
-			_instance = Service.instance;
+			//await tf.setBackend("cpu");
 		}
 
-		await tf.setBackend("tensorflow");
-		console.log("Active Backend:", tf.getBackend());
+		return this.instance!;
+	}
 
-		Guard.AgainstNullish(_instance);
+	public async GetPredictionService(station_id: string): Promise<PredictionService> {
+		const modelPath = `${this.modelDirectory}/${station_id}`;
 
-		try {
-			await _instance.LoadModel();
-		} catch (ex) {
-			_instance.model = tf.sequential({name: "envtrack-temperature"});
-			_instance.model.add(tf.layers.dense({units: 16, activation: 'relu', inputShape: [2]}));
-			_instance.model.add(tf.layers.dense({units: 1})); // Output layer for temperature
+		return PredictionService.Instantiate(this.log, this.mariadb, modelPath, station_id);
+	}
 
-			_instance.model.compile({optimizer: 'adam', loss: 'meanSquaredError'});
+	public async InitialiseAllPredictionServices(): Promise<void> {
+		const stationService = StationService.GetInstance(this.log, this.mariadb);
+		const allIds = await stationService.QueryAllStationIds();
 
+		await Promise.all(allIds.map(id => this.GetPredictionService.bind(this)(id)))
+	}
+}
+
+class PredictionService {
+	private model: Sequential | undefined;
+	private schedule: ScheduledTask;
+
+	private async TrainFn() {
+		//Train the model
+		const measurementService = MeasurementService.GetInstance();
+
+		const today = new Date().toISOString();
+		const startDate = new Date(today);
+		startDate.setDate(startDate.getDate() - 3);
+
+		const [tempLastThreeHrs, humLastThreeHrs] = await Promise.all(
+			[
+				measurementService.QueryMeasurementsOfTypeInDateRange(this.station_id, "Temperature", startDate.toISOString(), today),
+				measurementService.QueryMeasurementsOfTypeInDateRange(this.station_id, "Humidity", startDate.toISOString(), today)
+			]
+		);
+
+		this.log(`Running scheduled training for model ${this.station_id} with ${tempLastThreeHrs.length + humLastThreeHrs.length} records ...`);
+
+		await this.Train(tempLastThreeHrs.map(e => e.value), humLastThreeHrs.map(e => e.value));
+	}
+
+	private constructor(private log: RegisteredLogger, private mariadb: MariaDBConnector, private modelPath: string, private station_id: string) {
+		this.schedule = schedule("*/5 * * * *", async () => {
+			await this.TrainFn.bind(this)();
+		}, {runOnInit: true})
+	}
+
+	public static async Instantiate(log: RegisteredLogger, mariadb: MariaDBConnector, modelPath: string, station_id: string): Promise<PredictionService> {
+		log("Subservice Init");
+
+		const instance = new PredictionService(log, mariadb, modelPath, station_id);
+
+		//Load pre-existing model
+		const hasLoadedExistingModel = await instance.LoadModel();
+		if (hasLoadedExistingModel) {
+			log(`Loaded pre-existing model from "${modelPath}"`);
+		} else {
+
+			//If that fails, set up the model, compile it and save it
+			instance.model = tf.sequential({name: "envtrack-temperature"});
+
+			// Input layer (flatten the 3x2 input into a 6D vector)
+			instance.model.add(tf.layers.flatten({inputShape: [3, 2]}));
+
+			// Hidden layer
+			instance.model.add(tf.layers.dense({
+				units: 16,         // 16 neurons
+				activation: 'relu',  // ReLU activation function
+			}));
+
+			// Another hidden layer
+			instance.model.add(tf.layers.dense({
+				units: 32,         // 32 neurons
+				activation: 'relu',  // ReLU activation function
+			}));
+
+			// Output layer (predicts the next temperature)
+			instance.model.add(tf.layers.dense({
+				units: 1,  // Output a single value (predicted temperature)
+			}));
+
+			// Compile the model
+			instance.model.compile({
+				optimizer: tf.train.adam(),  // Adam optimizer
+				loss: 'meanSquaredError',    // MSE for regression tasks
+				metrics: ['mae'],            // Mean Absolute Error for evaluation
+			});
+
+			await instance.SaveModel();
+
+			log(`Created new model (adam, meanSquaredError) at "${modelPath}"`);
 		}
 
+		instance.schedule.start();
 
-		await _instance.SaveModel();
-		//await tf.setBackend("tensorflow");
-		return _instance;
-	}
-
-	public MakeTensorFromMeasurements<T extends AllMeasurementType, U extends AllMeasurementUnit>(pMeasurements: Array<Measurement<T, U>>): tf.Tensor2D {
-		return tf.tensor2d(pMeasurements.map(e => e.value), [pMeasurements.length, 1], "float32");
-	}
-
-	public async Train(temperatureTensor: Tensor2D, humidityTensor: Tensor2D) {
-		console.log(temperatureTensor, humidityTensor)
-		const p1 = performance.now();
-		this.log("Fitting...")
-		const trainingTask = await this.model?.fit(temperatureTensor, humidityTensor, {
-			epochs: 100,
-			batchSize: 2,
-			verbose: 1,
-			callbacks: {
-				onTrainBegin: (logs) => {
-					console.warn("onTrainBegin", logs);
-				},
-				onTrainEnd: (logs) => {
-					console.warn("onTrainEnd", logs);
-				}
-			}
+		// Compile the model
+		instance.model!.compile({
+			optimizer: tf.train.adam(), // Adam optimizer for better convergence
+			loss: 'meanSquaredError',  // Loss function for regression
+			metrics: ['mae'],          // Mean Absolute Error for evaluation
 		});
-		Guard.AgainstNullish(trainingTask);
-		await trainingTask.syncData();
+
+		return instance;
+	}
+
+	public CreateSequences(temperatures: Array<number>, humidities: Array<number>, sequenceLength: number) {
+		const inputs: Array<Array<Array<number>>> = []; // 3D array to store sequences
+		const outputs: Array<number> = [];
+
+		// Generate sequences of temperature and humidity pairs
+		for (let i = 0; i < temperatures.length - sequenceLength; i++) {
+			const inputSequence: Array<Array<number>> = [];
+			for (let j = i; j < i + sequenceLength; j++) {
+				// Each sequence element is a pair of [temperature, humidity]
+				inputSequence.push([temperatures[j], humidities[j]]);
+			}
+
+			inputs.push(inputSequence); // Push the sequence (3 pairs of [temperature, humidity])
+			outputs.push(temperatures[i + sequenceLength]); // Output: the next temperature after the sequence
+		}
+
+		return {inputs, outputs};
+	}
+
+	public async Train(temperatures: Array<number>, humidities: Array<number>) {
+		const p1 = performance.now();
+		Guard.AgainstNullish(this.model);
+		try {
+
+			const {inputs, outputs} = this.CreateSequences(temperatures, humidities, 3);
+
+			const inputTensor = tf.tensor3d(inputs, [inputs.length, 3, 2]);  // 3 features: [temperature, humidity] pair, sequence length = 3
+			const outputTensor = tf.tensor2d(outputs, [outputs.length, 1]); // 1 output (predicted temperature)
+
+			await this.model!.fit(inputTensor, outputTensor, {
+				epochs: 100,    // Training for 100 epochs
+				batchSize: 2,   // Batch size of 2
+				verbose: 0,     // To get feedback on training progress
+			});
+		} catch (ex) {
+			console.error(ex)
+		}
+
 		const p2 = performance.now();
 
 		this.log(`Training with ${250} epochs finished in ${(p2 - p1).toFixed(2)} ms!`);
@@ -86,25 +182,13 @@ export default class Service {
 		const validTemperatures = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Temperature", startDate.toISOString(), today);
 		const validHumidities = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Humidity", startDate.toISOString(), today);
 
-		const zipped = validTemperatures.map(t => {
-			const hum = validHumidities.find(h => h.timestamp === t.timestamp);
+		const {inputs} = this.CreateSequences(validTemperatures.map(e => e.value), validHumidities.map(e => e.value), 3);
 
-			return {
-				temperature: parseFloat(t.value as unknown as string),
-				humidity: hum ? parseFloat(hum.value as unknown as string) : 0
-			}
-		})
+		const inputTensor = tf.tensor3d(inputs, [inputs.length, 3, 2]);
 
-		if (zipped.length === 0)
-			return [];
+		const predictions = this.model!.predict(inputTensor) as Tensor;
 
-		this.log(`Predicting next temperature for ${zipped.length} t-h pairs...`);
-		const normalised = zipped.map(dto => {
-			return [dto.temperature, dto.humidity]
-		})
-
-		const tensor = tf.tensor2d(normalised, [normalised.length, 2])
-		const predictions = this.model?.predict(tensor) as tf.Tensor;
+		this.log(`Predicting next temperature data ...`);
 
 		const predictedValues = predictions.dataSync();
 
@@ -119,13 +203,16 @@ export default class Service {
 		await this.model.save(this.modelPath);
 	}
 
-	public async LoadModel() {
-		if (!existsSync(this.modelPath))
-			throw new Error(`Cannot load model from path "${this.modelPath}". Files do not exist`);
+	public async LoadModel(): Promise<boolean> {
+		const canLoad = existsSync(this.modelPath.slice(7));
+		if (!canLoad)
+			return false;
 
-		const loadedModel = await tf.loadLayersModel(this.modelPath);
+		const loadedModel = await tf.loadLayersModel(`${this.modelPath}/model.json`);
 		Guard.CastAs<Sequential>(loadedModel);
 
 		this.model = loadedModel;
+
+		return true;
 	}
 }

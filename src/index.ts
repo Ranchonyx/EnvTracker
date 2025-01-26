@@ -22,6 +22,9 @@ import Service from "./Services/MeasurementService/measurement.service.js";
 export type Config = {
 	MariaDB: MariaDBConnectorConfigSpec;
 	Logging: LoggerConfigSpec;
+	Prediction: {
+		modelDirectory: string;
+	}
 }
 
 const ParsedArgs = ArgParse<"config">(process.argv.slice(2));
@@ -80,7 +83,7 @@ const sessionStore = await MariaDBSessionStore.Instantiate(mariadb);
 const bus = new EventBus();
 const wire = bus.getChannel("sockets-to-webui");
 
-const appServer = new AppServer(8888, "/home", restLogger, websocketLogger, webserverLogger, mariadb, authTokenStoreWs, sessionStore, wire);
+const appServer = new AppServer(8888, "/home", restLogger, websocketLogger, webserverLogger, mariadb, authTokenStoreWs, sessionStore, wire, Configuration.Prediction);
 
 await appServer.InitialiseServices();
 await appServer.Start();
@@ -110,23 +113,3 @@ const srv = new SocketReceiver(8787, socketSrvLogger, async (station_id, data) =
 	}
 }, mariadb);
 srv.Start();
-
-const job = schedule("*/5 * * * *", async () => {
-	const predSvc = await PredictionService.GetInstance();
-	const measurementService = Service.GetInstance();
-
-	const today = new Date().toISOString();
-
-	const startDate = new Date(today);
-	startDate.setDate(startDate.getDate() - 3);
-
-	const [tempLastThreeHrs, humLastThreeHrs] = await Promise.all(
-		[
-			measurementService.QueryMeasurementsOfTypeInDateRange("e7ce4d5e-b6f9-11ef-b475-d0ad089b010b", "Temperature", startDate.toISOString(), today),
-			measurementService.QueryMeasurementsOfTypeInDateRange("e7ce4d5e-b6f9-11ef-b475-d0ad089b010b", "Humidity", startDate.toISOString(), today)
-		]
-	);
-
-	await predSvc.Train(predSvc.MakeTensorFromMeasurements(tempLastThreeHrs), predSvc.MakeTensorFromMeasurements(humLastThreeHrs));
-
-}, {name: "Train-Model", scheduled: true, runOnInit: true});

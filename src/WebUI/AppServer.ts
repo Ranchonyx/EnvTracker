@@ -24,7 +24,7 @@ import MeasurementService from "../Services/MeasurementService/measurement.servi
 import TenantService from "../Services/TenantService/tenant.service.js";
 import MeasurementRoute from "../Routes/measurement.route.js";
 import ChartRoute from "../Routes/chart.route.js";
-import PredictionService from "../Services/PredictionService/prediction.service.js";
+import PredictionServiceRegistry from "../Services/PredictionService/prediction.service.js";
 import PredictionRoute from "../Routes/prediction.route.js";
 import {AllMeasurementType} from "../Util/MeasurementUtil.js";
 
@@ -43,7 +43,9 @@ export default class AppServer {
 	private readonly log_rest: RegisteredLogger;
 	private readonly log_websocket: RegisteredLogger;
 
-	public constructor(pPort: number, pHomePath: string = "/home", pRestLogger: RegisteredLogger, pWebsocketLogger: RegisteredLogger, pWebserverLogger: RegisteredLogger, pMariaDBConnector: MariaDBConnector, pAuthTokenStore: AuthTokenStore, pSessionStore: Store, private channel: Channel) {
+	public constructor(pPort: number, pHomePath: string = "/home", pRestLogger: RegisteredLogger, pWebsocketLogger: RegisteredLogger, pWebserverLogger: RegisteredLogger, pMariaDBConnector: MariaDBConnector, pAuthTokenStore: AuthTokenStore, pSessionStore: Store, private channel: Channel, private predictionConfig: {
+		modelDirectory: string
+	}) {
 		this.log_rest = pRestLogger;
 		this.log_websocket = pWebsocketLogger;
 		this.mariadb = pMariaDBConnector;
@@ -77,7 +79,9 @@ export default class AppServer {
 		StationService.GetInstance(loggers.get("SERVICE/STATION"), this.mariadb);
 		MeasurementService.GetInstance(loggers.get("SERVICE/MEASUREMENT"), this.mariadb);
 		TenantService.GetInstance(loggers.get("SERVICE/TENANT"), this.mariadb);
-		await PredictionService.GetInstance(loggers.get("SERVICE/PREDICTION"), this.mariadb, "file://./model-temp-1a");
+		const initialisedPredRegistry = await PredictionServiceRegistry.GetInstance(loggers.get("SERVICE/PREDICTION"), this.mariadb, `file://${this.predictionConfig.modelDirectory}`);
+		await initialisedPredRegistry.InitialiseAllPredictionServices();
+
 	}
 
 	public async Start() {
@@ -112,7 +116,7 @@ export default class AppServer {
 
 		//Register listener for the channel to notify subscribed websockets of new data for their observing station
 		this.channel.addListener<string>(`new-record`, async (station_id_type: string) => {
-			const [station_id, type]= station_id_type.split("|");
+			const [station_id, type] = station_id_type.split("|");
 			const wsEvtMessage = this.createWebsocketEvent(`new-record-${station_id}`, type);
 			this.PublishWebsocketEvent(wsEvtMessage);
 		})
@@ -127,9 +131,9 @@ export default class AppServer {
 
 	private PublishWebsocketEvent(data: WebsocketEventMessage<any, any>) {
 		const ws = this.WebServer.websocketServer;
-/*
-		this.log_websocket(`Broadcasting ${JSON.stringify(data)} to ${ws.clients.size} websocket clients.`)
-*/
+		/*
+				this.log_websocket(`Broadcasting ${JSON.stringify(data)} to ${ws.clients.size} websocket clients.`)
+		*/
 		ws.clients.forEach(socket => {
 			Guard.CastAs<typeof socket & { subscribedTo: Array<WebsocketEvents> | undefined }>(socket);
 			if (!socket.subscribedTo)

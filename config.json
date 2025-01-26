@@ -9,5 +9,8 @@
     "host": "localhost",
     "password": "zorro250",
     "connectionLimit": 5
+  },
+  "Prediction": {
+    "modelDirectory": "./models/"
   }
 }

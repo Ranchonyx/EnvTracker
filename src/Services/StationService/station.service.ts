@@ -22,7 +22,21 @@ export default class Service {
 		return Service.instance!;
 	}
 
-	public async QueryStations(tenant_id: string): Promise<Array<QueryStationMetaResponse>> {
+	public async QueryAllStationIds(): Promise<Array<string>> {
+		const queriedStationIds = await this.mariadb.Query<{station_id: string}>(
+			`select
+						guid as station_id
+					from
+						station
+			`
+		);
+
+		Guard.AgainstNullish(queriedStationIds);
+		this.log("Queried all station ids");
+
+		return queriedStationIds.map(r => r.station_id);
+	}
+	public async QueryStationsForTenant(tenant_id: string): Promise<Array<QueryStationMetaResponse>> {
 		const queriedStationData = await this.mariadb.Query<QueryStationMetaResponse>(
 			`select
 						s.name as StationName, s.location as StationLocation, s.description as StationDescription, s.battery as StationBattery, s.guid as StationGuid
@@ -38,7 +52,7 @@ export default class Service {
 		return queriedStationData;
 	}
 
-	public async QueryStation(station_guid: string): Promise<QueryStationResponse> {
+	public async QueryStationMeta(station_guid: string): Promise<QueryStationResponse> {
 		const queryStationsResponse = await this.mariadb.Query<QueryStationResponse>(
 			`select
 						s.name as StationName, s.location as StationLocation, s.description as StationDescription, s.battery as StationBattery, s.guid as StationGuid, s.serial_number as StationSerialNumber, s.solar_panel as StationSolarPanel, s.status_flags as StationStatusFlags

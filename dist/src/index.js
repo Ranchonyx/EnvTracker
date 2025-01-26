@@ -9,9 +9,6 @@ import AppServer from "./WebUI/AppServer.js";
 import SocketReceiver from "./TCPSocketReceiver/TCPSocketReceiver.js";
 import { AddSensorMeasurement, CreateSensorIfNotExists, TryParseMeasurementString } from "./Util/MeasurementUtil.js";
 import EventBus from "./EventBus/EventBus.js";
-import { schedule } from "node-cron";
-import PredictionService from "./Services/PredictionService/prediction.service.js";
-import Service from "./Services/MeasurementService/measurement.service.js";
 const ParsedArgs = ArgParse(process.argv.slice(2));
 const configPath = ParsedArgs.get("config");
 if (!configPath && !existsSync(configPath))
@@ -55,7 +52,7 @@ const authTokenStoreWs = new AuthTokenStore("EnvTracker/Websockets", "E.Lauter/F
 const sessionStore = await MariaDBSessionStore.Instantiate(mariadb);
 const bus = new EventBus();
 const wire = bus.getChannel("sockets-to-webui");
-const appServer = new AppServer(8888, "/home", restLogger, websocketLogger, webserverLogger, mariadb, authTokenStoreWs, sessionStore, wire);
+const appServer = new AppServer(8888, "/home", restLogger, websocketLogger, webserverLogger, mariadb, authTokenStoreWs, sessionStore, wire, Configuration.Prediction);
 await appServer.InitialiseServices();
 await appServer.Start();
 const socketSrvLogger = LogManager.createLogger("TCP-Sockets", LogLevel.INFO);
@@ -79,16 +76,4 @@ const srv = new SocketReceiver(8787, socketSrvLogger, async (station_id, data) =
     }
 }, mariadb);
 srv.Start();
-const job = schedule("*/5 * * * *", async () => {
-    const predSvc = await PredictionService.GetInstance();
-    const measurementService = Service.GetInstance();
-    const today = new Date().toISOString();
-    const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - 3);
-    const [tempLastThreeHrs, humLastThreeHrs] = await Promise.all([
-        measurementService.QueryMeasurementsOfTypeInDateRange("e7ce4d5e-b6f9-11ef-b475-d0ad089b010b", "Temperature", startDate.toISOString(), today),
-        measurementService.QueryMeasurementsOfTypeInDateRange("e7ce4d5e-b6f9-11ef-b475-d0ad089b010b", "Humidity", startDate.toISOString(), today)
-    ]);
-    await predSvc.Train(predSvc.MakeTensorFromMeasurements(tempLastThreeHrs), predSvc.MakeTensorFromMeasurements(humLastThreeHrs));
-}, { name: "Train-Model", scheduled: true, runOnInit: true });
 //# sourceMappingURL=index.js.map
