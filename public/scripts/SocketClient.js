@@ -21,7 +21,7 @@ class SocketClient {
     }
 
     constructor(pOnMessage, pHost = document.location.host) {
-        const proto = location.protocol === "https" ? "wss" : "ws";
+        const proto = location.protocol === "https:" ? "wss" : "ws";
         this.#wsUrl = `${proto}://${pHost}`;
 
         this.#client = new WebSocket(this.#wsUrl);
