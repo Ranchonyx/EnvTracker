@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/styles/home.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <script src="/scripts/viz.js" defer></script>
+    <script src="/scripts/analysis.js" defer></script>
     <script src="/scripts/navbar.js" defer></script>
     <script src="/scripts/SocketClient.js" defer></script>
 
@@ -59,27 +59,6 @@
             <!-- Left Column: Chart -->
             <div class="col mb-4">
                 <div class="card h-100">
-                    <div class="card-header bg-secondary text-white">
-                        <h4 class="card-title mb-0">Sensor Data Visualization</h4>
-
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
-                                    data-bs-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false">
-                                Messdatentyp auswählen...
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-types" aria-labelledby="dropdownMenuButton">
-                            </div>
-                        </div>
-                        <form>
-                            <label for="date-from">Von</label>
-                            <input type="date" id="date-from" name="date-from">
-                            <label for="date-to">Bis</label>
-                            <input type="date" id="date-to" name="date-to">
-                        </form>
-
-
-                    </div>
                     <div class="card-body">
                         <!-- Add a custom class for styling -->
                         <canvas id="sensorChart" class="w-100" style="max-height: 500px;"></canvas>
