@@ -148,6 +148,8 @@ class PredictionService {
 	public async Train(temperatures: Array<number>, humidities: Array<number>) {
 		const p1 = performance.now();
 		Guard.AgainstNullish(this.model);
+		const epochs = 250;
+
 		try {
 
 			const {inputs, outputs} = this.CreateSequences(temperatures, humidities, 3);
@@ -156,9 +158,9 @@ class PredictionService {
 			const outputTensor = tf.tensor2d(outputs, [outputs.length, 1]); // 1 output (predicted temperature)
 
 			await this.model!.fit(inputTensor, outputTensor, {
-				epochs: 100,    // Training for 100 epochs
-				batchSize: 2,   // Batch size of 2
-				verbose: 0,     // To get feedback on training progress
+				epochs: epochs,
+				batchSize: 2,
+				verbose: 0
 			});
 		} catch (ex) {
 			console.error(ex)
@@ -166,12 +168,12 @@ class PredictionService {
 
 		const p2 = performance.now();
 
-		this.log(`Training with ${250} epochs finished in ${(p2 - p1).toFixed(2)} ms!`);
+		this.log(`Training with ${epochs} epochs finished in ${(p2 - p1).toFixed(2)} ms!`);
 
 		await this.SaveModel();
 	}
 
-	public async Predict(station_guid: string) {
+	public async Predict(station_guid: string, limit: number = 10) {
 		const measurementService = MeasurementService.GetInstance();
 
 		const today = new Date().toISOString();
@@ -182,7 +184,10 @@ class PredictionService {
 		const validTemperatures = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Temperature", startDate.toISOString(), today);
 		const validHumidities = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Humidity", startDate.toISOString(), today);
 
-		const {inputs} = this.CreateSequences(validTemperatures.map(e => e.value), validHumidities.map(e => e.value), 3);
+		const temperatures = validTemperatures.slice(0, limit);
+		const humidities = validHumidities.slice(0, limit);
+
+		const {inputs} = this.CreateSequences(temperatures.map(e => e.value), humidities.map(e => e.value), 3);
 
 		const inputTensor = tf.tensor3d(inputs, [inputs.length, 3, 2]);
 

@@ -19,7 +19,7 @@ export default class AuthTokenStore {
 	private readonly log: RegisteredLogger;
 
 	//Expires by default after 15m
-	public RequestToken(identifyingData: { id: string, password: string }, expiresInMs: number = 900000) {
+	public RequestToken(identifyingData: { id: string, password: string }, expiresInMs: number = 90000000) {
 		const token = this.signFunction({realm: this.realm, credentials: identifyingData}, this.SECRET, {
 			algorithm: "HS512",
 			issuer: this.issuer,

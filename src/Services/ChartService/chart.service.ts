@@ -3,12 +3,13 @@ import {RegisteredLogger} from "../../Logger/Logger.js";
 type RGBString = `rgba(${number}, ${number}, ${number}, ${number})`;
 
 type SingleChartDataset = {
-	label: string,
-	data: Array<number>,
-	borderColor: RGBString,
-	backgroundColor: RGBString,
-	borderWidth: number,
-	tension: number,
+	label: string;
+	data: Array<number>;
+	borderColor: RGBString;
+	backgroundColor: RGBString;
+	borderWidth: number;
+	tension: number;
+	fill: boolean;
 }
 
 type ChartDataset<T extends Array<string>, U extends Array<SingleChartDataset>, V extends "line" | "bar"> = {
@@ -54,6 +55,7 @@ export default class Service {
 			backgroundColor: "rgba(75, 192, 192, 0.2)",
 			borderWidth: 2,
 			tension: 0.2,
+			fill: true
 		}
 	}
 
