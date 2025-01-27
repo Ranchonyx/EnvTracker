@@ -25,10 +25,12 @@ router.get("/:station_id/predictTemperature", async (req, res) => {
 	const modelService = await predictionService.GetPredictionService(req.params.station_id);
 
 	const predictions = await modelService.Predict(req.params.station_id, 10);
-	const withOffsets = predictions.map((pre, idx) => {
+	const withOffsets: Array<Measurement<"Temperature", "°C">> = predictions.map((pre, idx) => {
 		return {
-			offset: idx,
-			value: pre
+			value: pre,
+			unit: "°C",
+			name: "Temperature",
+			timestamp: idx+""
 		};
 	})
 
