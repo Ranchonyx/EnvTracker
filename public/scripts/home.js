@@ -45,8 +45,10 @@ async function UpdateRecommendedCrops(measurements) {
     const crops = await recommendedCrops.json();
 
     if (crops.length === 0) {
-        buildListEntry("Keine Empfohlenen Pflanzenkulturen");
+        sidebar.appendChild(buildListEntry("Keine Empfohlenen Pflanzenkulturen"));
+        return;
     }
+
     for (const crop of crops) {
         const li = buildListEntry(crop);
         sidebar.appendChild(li);
