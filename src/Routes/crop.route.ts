@@ -13,9 +13,9 @@ router.post("/:station_id/recommendCrops", async (req, res) => {
 	const pressure = brief.find(b => b.name = "Pressure");
 
 	const recommendedCrops = cropService.RecommendCropsFor({
-		temperature: parseFloat(temperature + ""),
-		humidity: parseFloat(humidity + ""),
-		pressure: parseFloat(pressure + "")
+		temperature: parseFloat(temperature?.value + ""),
+		humidity: parseFloat(humidity?.value + ""),
+		pressure: parseFloat(pressure?.value + "")
 	});
 
 	res.send(recommendedCrops);
