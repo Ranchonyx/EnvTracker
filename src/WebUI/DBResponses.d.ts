@@ -44,7 +44,7 @@ export type Measurement<T extends AllMeasurementType, U extends AllMeasurementUn
 
 export type QueryLatestMeasurementsResponse<T extends AllMeasurementType = AllMeasurementType> = Record<T, number>;
 
-export type QueryStationStatusResponse = QueryLatestMeasurementsResponse<"Temperature" | "Humidity" | "Pressure" | "Solar Voltage">;
+export type QueryStationStatusResponse = QueryLatestMeasurementsResponse<"Temperature" | "Humidity" | "Pressure" | "Battery Voltage">;
 
 /*{
 	temperature: number;

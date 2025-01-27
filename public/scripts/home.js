@@ -20,7 +20,7 @@ function buildTableRow(name, value, unit) {
 
 async function UpdateRecommendedCrops(measurements) {
     const sidebar = document.querySelector('.sidebar');
-    const recommendedCrops = await fetch(`/crop/${sessionStorage.getItem("last-station", guid)}/recommendCrops`, {
+    const recommendedCrops = await fetch(`/crop/${sessionStorage.getItem("last-station")}/recommendCrops`, {
         method: "POST",
         body: JSON.stringify(measurements),
         headers: {

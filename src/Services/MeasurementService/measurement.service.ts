@@ -1,6 +1,6 @@
 import {RegisteredLogger} from "../../Logger/Logger.js";
 import {AllMeasurementType, AllMeasurementUnit, AvailableMeasurementTypes} from "../../Util/MeasurementUtil.js";
-import {Measurement, QueryStationStatusResponse} from "../../WebUI/DBResponses.js";
+import {Measurement} from "../../WebUI/DBResponses.js";
 import MariaDBConnector from "../../MariaDBConnector/MariaDBConnector.js";
 
 export default class Service {
@@ -130,7 +130,7 @@ export default class Service {
 		return this.QueryMeasurementsOfType<T, U>(station_guid, 1, ...types);
 	}
 
-	public async QueryStatusForStation(station_guid: string): Promise<QueryStationStatusResponse> {
+	public async QueryStatusForStation(station_guid: string) {
 		this.log(`Queried brief measurement staus for station ${station_guid}`);
 
 		return this.QueryLatestMeasurementsOfType(station_guid, "Temperature", "Humidity", "Pressure", "Battery Voltage");
