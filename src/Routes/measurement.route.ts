@@ -12,8 +12,9 @@ const router = express.Router();
 router.get("/:station_id/brief", async (req, res) => {
 	const {station_id} = req.params;
 	const measurementService = MeasurementService.GetInstance();
-	const queryLatestResponse: QueryStationStatusResponse = await measurementService.QueryStatusForStation(station_id);
+	const queryLatestResponse = await measurementService.QueryStatusForStation(station_id);
 
+	// @ts-ignore
 	res.send(OmitMany<typeof queryLatestResponse, "rn">(queryLatestResponse, "rn"));
 })
 
