@@ -73,11 +73,7 @@ async function RenderChartAndDisplays() {
     const predictionChartData = await predictionDataChartResponse.json();
 
     for(let i = 0; i < predictionChartData.data.labels.length; i++) {
-        const [hours, minutes] = temperatureData[temperatureData.length - 1].timestamp.split(":");
-        const d = new Date();
-        d.setHours(hours, minutes);
-
-        predictionChartData.data.labels[i] = `${d.getHours()}:${(d.getMinutes() + "").padStart(2, "0")}`;
+        predictionChartData.data.labels[i] = `P+${i}`;
     }
 
     chartData.data.datasets.push(predictionChartData.data.datasets[0]);
