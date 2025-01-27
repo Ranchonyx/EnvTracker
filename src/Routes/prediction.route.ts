@@ -22,13 +22,16 @@ router.post("/:station_id/train", async (req, res) => {
 
 router.get("/:station_id/predictTemperature", async (req, res) => {
 	Guard.CastAs<{
-		limit?: number;
+		limit?: string;
 	}>(req.query);
+
+	const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+	const isValidLimit = !Number.isNaN(limit);
 
 	const predictionService = await PredictionService.GetInstance();
 	const modelService = await predictionService.GetPredictionService(req.params.station_id);
 
-	const predictions = await modelService.Predict(req.params.station_id, req.query.limit);
+	const predictions = await modelService.Predict(req.params.station_id, isValidLimit ? limit : 10);
 	const withOffsets = predictions.map((pre, idx) => {
 		return {
 			offset: idx,
