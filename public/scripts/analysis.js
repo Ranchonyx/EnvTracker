@@ -31,21 +31,21 @@ async function RenderChartAndDisplays() {
 
     const myStationId = getStationId();
     const typeDataRequest = await fetch(`/measurement/${getStationId()}/Temperature?forDay=${today}`);
-    const typeData = await typeDataRequest.json();
+    const temperatureData = await typeDataRequest.json();
 
     const predictionDataRequest = await fetch(`/prediction/${getStationId()}/predictTemperature`);
     const predictionData = await predictionDataRequest.json();
 
     const chartDataResponse = await fetch(`/chart/${myStationId}/transform`, {
         method: "POST",
-        body: JSON.stringify(typeData),
+        body: JSON.stringify(temperatureData),
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         },
     });
 
-    const predictionDataReesponse = await fetch(`/chart/${myStationId}/transform`, {
+    const predictionDataChartResponse = await fetch(`/chart/${myStationId}/transform`, {
         method: "POST",
         body: JSON.stringify(predictionData),
         headers: {
@@ -70,16 +70,27 @@ async function RenderChartAndDisplays() {
     }
 
     const chartData = await chartDataResponse.json();
+    const predictionChartData = await predictionDataChartResponse.json();
 
+    for(let i = 0; i < predictionChartData.data.length; i++) {
+        const [hours, minutes] = [temperatureData.length - 1].timestamp.split(":");
+        const d = new Date();
+        d.setHours(hours, minutes);
 
-    maxValueElement.textContent = `${Math.max(...typeData.map(e => parseFloat(e.value))).toFixed(2)} ${typeData[0].unit}`;
-    minValueElement.textContent = `${Math.min(...typeData.map(e => parseFloat(e.value))).toFixed(2)} ${typeData[0].unit}`;
+        predictionChartData.data.labels[i] = `${d.getHours()}:${(d.getMinutes() + "").padStart(2, "0")}`;
+    }
 
-    const accumulated = typeData
+    chartData.data.datasets.push(predictionChartData.data.datasets[0]);
+    chartData.data.labels.push(...predictionChartData.data.labels);
+
+    maxValueElement.textContent = `${Math.max(...temperatureData.map(e => parseFloat(e.value))).toFixed(2)} ${temperatureData[0].unit}`;
+    minValueElement.textContent = `${Math.min(...temperatureData.map(e => parseFloat(e.value))).toFixed(2)} ${temperatureData[0].unit}`;
+
+    const accumulated = temperatureData
         .map(e => parseFloat(e.value))
         .reduce((acc, v) => acc + v, 0);
 
-    avgValueElement.textContent = `${(accumulated / typeData.length).toFixed(2)} ${typeData[0].unit}`;
+    avgValueElement.textContent = `${(accumulated / temperatureData.length).toFixed(2)} ${temperatureData[0].unit}`;
 
     globalThis.ChartRenderer.render(chartData);
 }

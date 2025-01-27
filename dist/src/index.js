@@ -64,7 +64,7 @@ const srv = new SocketReceiver(8787, socketSrvLogger, async (station_id, data) =
         console.log(`Received invalid sensor data: ${sensorDataUTF8}`);
         return;
     }
-    //console.log(`Received ${parsedSensorData.length} records from station ${station_id}`);
+    console.log(`Received ${parsedSensorData.length} records from station ${station_id}`);
     //On incoming new records, notify all websockets for the source station that there is new data available in the database...
     for (const recordArray of parsedSensorData) {
         const sensorName = recordArray.sensorName;

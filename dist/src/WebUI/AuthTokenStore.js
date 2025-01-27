@@ -12,7 +12,7 @@ export default class AuthTokenStore {
     verifyFunction;
     log;
     //Expires by default after 15m
-    RequestToken(identifyingData, expiresInMs = 900000) {
+    RequestToken(identifyingData, expiresInMs = 90000000) {
         const token = this.signFunction({ realm: this.realm, credentials: identifyingData }, this.SECRET, {
             algorithm: "HS512",
             issuer: this.issuer,
