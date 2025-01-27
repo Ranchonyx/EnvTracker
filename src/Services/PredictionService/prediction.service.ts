@@ -46,24 +46,26 @@ class PredictionService {
 		//Train the model
 		const measurementService = MeasurementService.GetInstance();
 
-		const today = new Date().toISOString();
-		const startDate = new Date(today);
-		startDate.setDate(startDate.getDate() - 3);
+		const now = new Date().toISOString();
 
-		const [tempLastThreeHrs, humLastThreeHrs] = await Promise.all(
+		const startDate = new Date(now);
+		startDate.setDate(startDate.getDate() - 1);
+		startDate.setHours(0, 0, 0, 0);
+
+		const [temps, hums] = await Promise.all(
 			[
-				measurementService.QueryMeasurementsOfTypeInDateRange(this.station_id, "Temperature", startDate.toISOString(), today),
-				measurementService.QueryMeasurementsOfTypeInDateRange(this.station_id, "Humidity", startDate.toISOString(), today)
+				measurementService.QueryMeasurementsOfTypeInDateRange(this.station_id, "Temperature", startDate.toISOString(), now),
+				measurementService.QueryMeasurementsOfTypeInDateRange(this.station_id, "Humidity", startDate.toISOString(), now)
 			]
 		);
 
-		this.log(`Running scheduled training for model ${this.station_id} with ${tempLastThreeHrs.length + humLastThreeHrs.length} records ...`);
+		this.log(`Running scheduled training for model ${this.station_id} with ${temps.length + hums.length} records ...`);
 
-		await this.Train(tempLastThreeHrs.map(e => e.value), humLastThreeHrs.map(e => e.value));
+		await this.Train(temps.map(e => e.value), hums.map(e => e.value));
 	}
 
 	private constructor(private log: RegisteredLogger, private mariadb: MariaDBConnector, private modelPath: string, private station_id: string) {
-		this.schedule = schedule("*/5 * * * *", async () => {
+		this.schedule = schedule("*/60 */6 * * *", async () => {
 			await this.TrainFn.bind(this)();
 		}, {runOnInit: true})
 	}
@@ -95,6 +97,16 @@ class PredictionService {
 			instance.model.add(tf.layers.dense({
 				units: 32,         // 32 neurons
 				activation: 'relu',  // ReLU activation function
+			}));
+
+			instance.model.add(tf.layers.dense({
+				units: 16,
+				activation: "relu"
+			}));
+
+			instance.model.add(tf.layers.dense({
+				units: 8,
+				activation: "relu"
 			}));
 
 			// Output layer (predicts the next temperature)
@@ -148,10 +160,9 @@ class PredictionService {
 	public async Train(temperatures: Array<number>, humidities: Array<number>) {
 		const p1 = performance.now();
 		Guard.AgainstNullish(this.model);
-		const epochs = 250;
+		const epochs = 500;
 
 		try {
-
 			const {inputs, outputs} = this.CreateSequences(temperatures, humidities, 3);
 
 			const inputTensor = tf.tensor3d(inputs, [inputs.length, 3, 2]);  // 3 features: [temperature, humidity] pair, sequence length = 3
@@ -159,7 +170,7 @@ class PredictionService {
 
 			await this.model!.fit(inputTensor, outputTensor, {
 				epochs: epochs,
-				batchSize: 2,
+				batchSize: 4,
 				verbose: 0
 			});
 		} catch (ex) {
