@@ -74,10 +74,11 @@ async function RenderChartAndDisplays() {
     predictionChartData.data.datasets[0].backgroundColor = "rgba(255, 99, 132, 0.2)";
     predictionChartData.data.datasets[0].borderColor = "rgba(255, 99, 132, 1)";
 
+    predictionChartData.data.datasets[0].label = "P(Temperature)"
     chartData.data.datasets.push(predictionChartData.data.datasets[0]);
 
     globalThis.ChartRenderer.render(chartData);
-    statusElement.textContent = `Temp / P(Temp)`;
+    statusElement.textContent = `Temperature / P(Temperature)`;
 }
 
 async function HandleWebsocketResponse(message) {
