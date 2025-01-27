@@ -75,7 +75,6 @@ async function RenderChartAndDisplays() {
     predictionChartData.data.datasets[0].borderColor = "rgba(255, 99, 132, 1)";
 
     chartData.data.datasets.push(predictionChartData.data.datasets[0]);
-    chartData.data.labels.push(...predictionChartData.data.labels);
 
     globalThis.ChartRenderer.render(chartData);
     statusElement.textContent = `Temp / P(Temp)`;
