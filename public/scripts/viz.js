@@ -26,18 +26,11 @@ function getStationId() {
     return sessionStorage.getItem("last-station");
 }
 
-async function RenderChartAndDisplays(type) {
+async function RenderChartAndDisplays() {
     const today = new Date().toISOString();
 
-    const dateFromElement = document.querySelector("#date-from");
-    const dateToElement = document.querySelector("#date-to");
-
-    const shouldUseDateFrame = dateFromElement.value.length > 0 && dateToElement.value.length > 0;
-
-    const params = shouldUseDateFrame ? `from=${new Date(dateFromElement.value).toISOString()}&to=${new Date(dateToElement.value).toISOString()}` : `forDay=${today}`;
-
     const myStationId = getStationId();
-    const typeDataRequest = await fetch(`/measurement/${getStationId()}/${type}?${params}`);
+    const typeDataRequest = await fetch(`/measurement/${getStationId()}/Temperature?forDay=${today}`);
     const typeData = await typeDataRequest.json();
 
     const chartDataResponse = await fetch(`/chart/${myStationId}/transform`, {
@@ -82,56 +75,10 @@ async function RenderChartAndDisplays(type) {
 async function HandleWebsocketResponse(message) {
     const json = JSON.parse(message);
 
-    //Update existing chart with new dataaaaa
+    //Update existing chart with new dataaaaaaaaaaaa
     if(json.data === localStorage.getItem("last-type")) {
         await RenderChartAndDisplays(json.data);
     }
-}
-
-async function QueryAvailableMeasurementTypes() {
-    const request = await fetch(`/measurement/${getStationId()}/types`);
-    return request.json();
-}
-
-async function entryClickEventListener(ev) {
-    ev.preventDefault();
-    const typeSpecifier = ev.target.textContent;
-
-    const targetText = `Messwerte (${typeSpecifier})`;
-
-    localStorage.setItem("last-type", typeSpecifier);
-
-    document.querySelector(".dropdown-toggle").textContent = targetText;
-
-    await RenderChartAndDisplays(typeSpecifier);
-}
-
-function createDropdownEntry(name) {
-    const anchor = document.createElement("a");
-    anchor.classList.add("dropdown-item");
-    anchor.href = "#";
-    anchor.innerText = name;
-
-    anchor.addEventListener("click", entryClickEventListener);
-
-    return anchor;
-}
-
-async function SetupTypeDropdown() {
-    const types = await QueryAvailableMeasurementTypes();
-
-    //Ignore last entry "all"
-    const dropdownEntries = types
-        .slice(0, -1)
-        .map(entry => createDropdownEntry(entry));
-
-    const dropdownMenu = document.querySelector(".dropdown-menu-types");
-
-    //Clear dropdown entries
-    while (dropdownMenu.hasChildNodes())
-        dropdownMenu.removeChild(dropdownMenu.firstChild);
-
-    dropdownMenu.append(...dropdownEntries);
 }
 
 document.addEventListener("DOMContentLoaded", async (ev) => {
@@ -141,8 +88,6 @@ document.addEventListener("DOMContentLoaded", async (ev) => {
     globalThis.sc = sc;
 
     sc.Send(`subscribe#new-record-${getStationId()}`);
-
-    await SetupTypeDropdown();
 
     localStorage.removeItem("last-type");
     globalThis.ChartRenderer = chartRenderer("#sensorChart");

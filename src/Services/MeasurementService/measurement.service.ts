@@ -89,10 +89,10 @@ export default class Service {
 						${typeClause} s.station_guid = '${station_guid}'
 				)
 				SELECT
-					name, unit, value, CONCAT(HOUR(CAST(timestamp as datetime)) + 1, ':', MINUTE(CAST(timestamp as datetime)) + 1) as timestamp
+					name, unit, value, CONCAT(HOUR(CAST(timestamp as datetime)) + 1, ':', LPAD(MINUTE(CAST(timestamp AS DATETIME)), 2, '0')) AS timestamp
 				FROM
 					LatestData ${whereClauseOrEmptyString}
-				GROUP BY CONCAT(HOUR(CAST(timestamp as datetime)) + 1, ':',MINUTE(CAST(timestamp as datetime)) + 1), name, unit
+				GROUP BY CONCAT(HOUR(CAST(timestamp as datetime)) + 1, ':', LPAD(MINUTE(CAST(timestamp AS DATETIME)), 2, '0')), name, unit
 			`
 		);
 

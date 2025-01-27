@@ -27,6 +27,7 @@ import ChartRoute from "../Routes/chart.route.js";
 import PredictionServiceRegistry from "../Services/PredictionService/prediction.service.js";
 import PredictionRoute from "../Routes/prediction.route.js";
 import {AllMeasurementType} from "../Util/MeasurementUtil.js";
+import AnalysisRoute from "../Routes/analysis.route.js";
 
 type WebsocketEventMessage<T, V> = {
 	type: V;
@@ -107,6 +108,8 @@ export default class AppServer {
 		app.use("/measurement", MeasurementRoute);
 		app.use("/chart", ChartRoute);
 		app.use("/prediction", PredictionRoute);
+		app.use("/prediction", AnalysisRoute);
+
 		this.log_rest(`All routers mounted.`);
 
 		//If the requested route matches nothing, display a lovely 404 page
