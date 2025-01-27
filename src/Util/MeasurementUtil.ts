@@ -151,7 +151,13 @@ export async function AddSensorMeasurement(mdb_api: MariaDBConnector, station_gu
 	const sensor_guid = await GetSensorGuidByNameAndStationId(mdb_api, sensorName, station_guid);
 	Guard.AgainstNullish(sensor_guid);
 
+	const insertTimestamp = new Date().toISOString();
+	let {value, unit, name} = measurement;
+
+	if(name === "Altitude")
+		value = 44.801;
+
 	return mdb_api.Query(
-		`INSERT INTO measurement (sensor_guid, timestamp, unit, value, name) VALUES ('${sensor_guid}', '${new Date().toISOString()}', '${measurement.unit}', ${measurement.value}, '${measurement.name}')`
+		`INSERT INTO measurement (sensor_guid, timestamp, unit, value, name) VALUES ('${sensor_guid}', '${insertTimestamp}', '${unit}', ${value}, '${name}')`
 	);
 }
