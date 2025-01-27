@@ -18,6 +18,33 @@ function buildTableRow(name, value, unit) {
     return tr;
 }
 
+async function UpdateRecommendedCrops(measurements) {
+    const sidebar = document.querySelector('.sidebar');
+    const recommendedCrops = await fetch(`/crop/${sessionStorage.getItem("last-station", guid)}/recommendCrops`, {
+        method: "POST",
+        body: JSON.stringify(measurements),
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+    })
+
+    const crops = await recommendedCrops.json();
+
+    for(const crop of crops) {
+        const li = document.createElement("li");
+        li.classList.add("list-group-item");
+
+        const i = document.createElement("i");
+        i.classList.add("bi bi-seedling me-2");
+
+        li.appendChild(i);
+        li.appendChild(document.createTextNode(crop));
+
+        sidebar.appendChild(li);
+    }
+}
+
 async function UpdateSidebar(measurements) {
     const sidebar = document.querySelector('.sidebar');
     const dataTable = sidebar.querySelector(".selected-station-data-table");
@@ -58,10 +85,10 @@ async function StationPaneClickHandler(ev) {
     const guid = dataset.guid;
 
     const latest = await getLatestMeasurementsForStation(guid);
-    console.log(guid, latest);
     sessionStorage.setItem("last-station", guid);
 
     await UpdateSidebar(latest);
+    await UpdateRecommendedCrops(latest);
 }
 
 document.addEventListener("DOMContentLoaded", async (ev) => {

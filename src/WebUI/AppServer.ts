@@ -28,6 +28,7 @@ import PredictionServiceRegistry from "../Services/PredictionService/prediction.
 import PredictionRoute from "../Routes/prediction.route.js";
 import {AllMeasurementType} from "../Util/MeasurementUtil.js";
 import AnalysisRoute from "../Routes/analysis.route.js";
+import CropRoute from "../Routes/crop.route.js";
 
 type WebsocketEventMessage<T, V> = {
 	type: V;
@@ -109,6 +110,7 @@ export default class AppServer {
 		app.use("/chart", ChartRoute);
 		app.use("/prediction", PredictionRoute);
 		app.use("/analysis", AnalysisRoute);
+		app.use("/crop", CropRoute);
 
 		this.log_rest(`All routers mounted.`);
 
