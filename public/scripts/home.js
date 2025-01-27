@@ -18,6 +18,19 @@ function buildTableRow(name, value, unit) {
     return tr;
 }
 
+function buildListEntry(crop) {
+    const li = document.createElement("li");
+    li.classList.add("list-group-item");
+
+    const i = document.createElement("i");
+    i.classList.add("bi bi-seedling me-2");
+
+    li.appendChild(i);
+    li.appendChild(document.createTextNode(crop));
+
+    return li;
+}
+
 async function UpdateRecommendedCrops(measurements) {
     const sidebar = document.querySelector('.sidebar');
     const recommendedCrops = await fetch(`/crop/${sessionStorage.getItem("last-station")}/recommendCrops`, {
@@ -31,16 +44,11 @@ async function UpdateRecommendedCrops(measurements) {
 
     const crops = await recommendedCrops.json();
 
-    for(const crop of crops) {
-        const li = document.createElement("li");
-        li.classList.add("list-group-item");
-
-        const i = document.createElement("i");
-        i.classList.add("bi bi-seedling me-2");
-
-        li.appendChild(i);
-        li.appendChild(document.createTextNode(crop));
-
+    if(crops.length === 0) {
+        buildListEntry("Keine Empfohlenen Pflanzenkulturen");
+    }
+    for (const crop of crops) {
+        const li = buildListEntry(crop);
         sidebar.appendChild(li);
     }
 }
@@ -53,7 +61,7 @@ async function UpdateSidebar(measurements) {
     while (dataTable.children.length > 0)
         dataTable.removeChild(dataTable.firstChild);
 
-    if(measurements.length === 0) {
+    if (measurements.length === 0) {
         const row = buildTableRow("No Data available for selected station", "", "");
 
         dataTable.appendChild(row);
@@ -77,8 +85,8 @@ async function StationPaneClickHandler(ev) {
         element.classList.remove("shadow");
         element.style.backgroundColor = '#E3E3E3';
     });
-/*
-    stationPane.style.filter = "hue-rotate(40deg)";*/
+    /*
+        stationPane.style.filter = "hue-rotate(40deg)";*/
     stationPane.style.backgroundColor = '#fafaf5';
     stationPane.classList.add("shadow");
 
