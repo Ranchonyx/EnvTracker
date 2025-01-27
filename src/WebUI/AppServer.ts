@@ -108,7 +108,7 @@ export default class AppServer {
 		app.use("/measurement", MeasurementRoute);
 		app.use("/chart", ChartRoute);
 		app.use("/prediction", PredictionRoute);
-		app.use("/prediction", AnalysisRoute);
+		app.use("/analysis", AnalysisRoute);
 
 		this.log_rest(`All routers mounted.`);
 
