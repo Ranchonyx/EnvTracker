@@ -168,14 +168,14 @@ export default class Service {
 		}
 	];
 
-	private constructor(private log: RegisteredLogger, private mariadb: MariaDBConnector) {
+	private constructor(private log: RegisteredLogger) {
 	}
 
 	public static GetInstance(log?: RegisteredLogger, mariadb?: MariaDBConnector): Service {
-		if (!Service.instance && log && mariadb) {
+		if (!Service.instance && log) {
 			log("Init");
 
-			return (Service.instance = new Service(log, mariadb))
+			return (Service.instance = new Service(log));
 		}
 
 		return Service.instance!;

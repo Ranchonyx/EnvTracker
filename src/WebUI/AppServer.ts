@@ -29,6 +29,7 @@ import PredictionRoute from "../Routes/prediction.route.js";
 import {AllMeasurementType} from "../Util/MeasurementUtil.js";
 import AnalysisRoute from "../Routes/analysis.route.js";
 import CropRoute from "../Routes/crop.route.js";
+import CropService from "../Services/CropService/crop.service.js";
 
 type WebsocketEventMessage<T, V> = {
 	type: V;
@@ -66,7 +67,8 @@ export default class AppServer {
 			"SERVICE/SSR",
 			"SERVICE/STATION",
 			"SERVICE/TENANT",
-			"SERVICE/PREDICTION"
+			"SERVICE/PREDICTION",
+			"SERVICE/CROPS"
 		] as const;
 
 		type ToUnion<T extends readonly any[]> = T[number];
@@ -83,6 +85,8 @@ export default class AppServer {
 		TenantService.GetInstance(loggers.get("SERVICE/TENANT"), this.mariadb);
 		const initialisedPredRegistry = await PredictionServiceRegistry.GetInstance(loggers.get("SERVICE/PREDICTION"), this.mariadb, `file://${this.predictionConfig.modelDirectory}`);
 		await initialisedPredRegistry.InitialiseAllPredictionServices();
+
+		CropService.GetInstance(loggers.get("SERVICE/CROPS"));
 
 	}
 
