@@ -184,6 +184,9 @@ class PredictionService {
 		const validTemperatures = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Temperature", startDate.toISOString(), today);
 		const validHumidities = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Humidity", startDate.toISOString(), today);
 
+		if(validTemperatures.length === 0 || validHumidities.length === 0)
+			return [];
+
 		const temperatures = validTemperatures.slice(0, limit);
 		const humidities = validHumidities.slice(0, limit);
 
