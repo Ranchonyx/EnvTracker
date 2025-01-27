@@ -194,10 +194,11 @@ export default class Service {
 	}
 
 	public RecommendCropsFor(environmentalData: EnvRecord) {
-		const suitableCrops = this.CropDatabase.filter(crop =>
+		const suitableCrops = this.CropDatabase.filter((crop) =>
 			this.IsCropSuitableFor(crop, environmentalData)
 		);
 
+		this.log(`Suitable crops for ${JSON.stringify(environmentalData)}: ${suitableCrops.join(", ")}`);
 		return suitableCrops.map(crop => crop.name);
 	}
 }

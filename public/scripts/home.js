@@ -23,7 +23,7 @@ function buildListEntry(crop) {
     li.classList.add("list-group-item");
 
     const i = document.createElement("i");
-    i.classList.add("bi bi-seedling me-2");
+    i.classList.add("bi", "bi-seedling", "me-2");
 
     li.appendChild(i);
     li.appendChild(document.createTextNode(crop));
@@ -44,7 +44,7 @@ async function UpdateRecommendedCrops(measurements) {
 
     const crops = await recommendedCrops.json();
 
-    if(crops.length === 0) {
+    if (crops.length === 0) {
         buildListEntry("Keine Empfohlenen Pflanzenkulturen");
     }
     for (const crop of crops) {
