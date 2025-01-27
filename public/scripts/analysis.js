@@ -76,8 +76,8 @@ async function RenderChartAndDisplays() {
         predictionChartData.data.labels[i] = `P+${i}`;
     }
 
-    predictionData.data.datasets[0].backgroundColor = "rgba(255, 99, 132, 0.2)";
-    predictionData.data.datasets[0].borderColor = "rgba(255, 99, 132, 1)";
+    predictionChartData.data.datasets[0].backgroundColor = "rgba(255, 99, 132, 0.2)";
+    predictionChartData.data.datasets[0].borderColor = "rgba(255, 99, 132, 1)";
 
     chartData.data.datasets.push(predictionChartData.data.datasets[0]);
     chartData.data.labels.push(...predictionChartData.data.labels);
