@@ -55,16 +55,11 @@ async function RenderChartAndDisplays() {
     });
 
 
-    const maxValueElement = document.querySelector("#maxValue");
-    const minValueElement = document.querySelector("#minValue");
-    const avgValueElement = document.querySelector("#averageValue");
+    const statusElement = document.querySelector("#status");
 
     if (chartDataResponse.status === 400) {
         //No data for today... render a message
         ChartRenderer.renderMessage("Keine Messwerte verfügbar");
-        maxValueElement.textContent = "--";
-        minValueElement.textContent = "--";
-        avgValueElement.textContent = "--";
 
         return;
     }
@@ -82,16 +77,8 @@ async function RenderChartAndDisplays() {
     chartData.data.datasets.push(predictionChartData.data.datasets[0]);
     chartData.data.labels.push(...predictionChartData.data.labels);
 
-    maxValueElement.textContent = `${Math.max(...temperatureData.map(e => parseFloat(e.value))).toFixed(2)} ${temperatureData[0].unit}`;
-    minValueElement.textContent = `${Math.min(...temperatureData.map(e => parseFloat(e.value))).toFixed(2)} ${temperatureData[0].unit}`;
-
-    const accumulated = temperatureData
-        .map(e => parseFloat(e.value))
-        .reduce((acc, v) => acc + v, 0);
-
-    avgValueElement.textContent = `${(accumulated / temperatureData.length).toFixed(2)} ${temperatureData[0].unit}`;
-
     globalThis.ChartRenderer.render(chartData);
+    statusElement.textContent = `Temp / P(Temp)`;
 }
 
 async function HandleWebsocketResponse(message) {
@@ -115,6 +102,7 @@ document.addEventListener("DOMContentLoaded", async (ev) => {
 
     localStorage.removeItem("last-type");
     globalThis.ChartRenderer = chartRenderer("#sensorChart");
+    ChartRenderer.renderMessage("Lade Daten...");
 
     await RenderChartAndDisplays();
 });
