@@ -45,7 +45,7 @@ async function RenderChartAndDisplays() {
         },
     });
 
-    const predictionDataReesponse =  await fetch(`/chart/${myStationId}/transform`, {
+    const predictionDataReesponse = await fetch(`/chart/${myStationId}/transform`, {
         method: "POST",
         body: JSON.stringify(predictionData),
         headers: {
@@ -88,7 +88,7 @@ async function HandleWebsocketResponse(message) {
     const json = JSON.parse(message);
 
     //Update existing chart with new dataaaaa
-    if(json.data === localStorage.getItem("last-type")) {
+    if (json.data === localStorage.getItem("last-type")) {
         await RenderChartAndDisplays(json.data);
     }
 }
@@ -102,8 +102,9 @@ document.addEventListener("DOMContentLoaded", async (ev) => {
 
     sc.Send(`subscribe#new-record-${getStationId()}`);
 
-    await RenderChartAndDisplays();
 
     localStorage.removeItem("last-type");
     globalThis.ChartRenderer = chartRenderer("#sensorChart");
+
+    await RenderChartAndDisplays();
 });
