@@ -70,8 +70,8 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
     const {max, min, avg} = aggregatedData;
 
     maxValueElement.textContent = `${max.toFixed(2)} ${unit}`;
-    minValueElement.textContent = `${min.max.toFixed(2)} ${unit}`;
-    avgValueElement.textContent = `${avg.max.toFixed(2)} ${unit}`;
+    minValueElement.textContent = `${min.toFixed(2)} ${unit}`;
+    avgValueElement.textContent = `${avg.toFixed(2)} ${unit}`;
 
 }
 
