@@ -222,7 +222,7 @@ class PredictionService {
 	*
 	* Momentan sagt das Modell die Temperaturen vorher.
 	* */
-	public async Predict(station_guid: string) {
+	public async Predict(station_guid: string): Promise<Array<number>> {
 		const measurementService = MeasurementService.GetInstance();
 
 		const now = new Date().toISOString();
@@ -257,11 +257,11 @@ class PredictionService {
 
 		this.log(`Predicting future temperatures ...`);
 
-		const predictedValues = predictions.arraySync() as Array<number>;
+		const predictedValues = predictions.arraySync() as Array<Array<number>>;
 
-		this.log(predictedValues);
+		this.log(`Predicted`, predictedValues);
 
-		return predictedValues;
+		return predictedValues[0];
 	}
 
 	/*
