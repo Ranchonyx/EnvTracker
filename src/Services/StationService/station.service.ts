@@ -22,6 +22,9 @@ export default class Service {
 		return Service.instance!;
 	}
 
+	/*
+	* Alle im System verfügbaren Stations-IDs abrufen
+	* */
 	public async QueryAllStationIds(): Promise<Array<string>> {
 		const queriedStationIds = await this.mariadb.Query<{station_id: string}>(
 			`select
@@ -36,6 +39,10 @@ export default class Service {
 
 		return queriedStationIds.map(r => r.station_id);
 	}
+
+	/*
+	* Alle Stationen für einen Mandanten abrufen
+	* */
 	public async QueryStationsForTenant(tenant_id: string): Promise<Array<QueryStationMetaResponse>> {
 		const queriedStationData = await this.mariadb.Query<QueryStationMetaResponse>(
 			`select
@@ -52,7 +59,10 @@ export default class Service {
 		return queriedStationData;
 	}
 
-	public async QueryStationMeta(station_guid: string): Promise<QueryStationResponse> {
+	/*
+	* Metadaten und Messwert-Briefing über eine Station abrufen
+	* */
+	public async QueryStation(station_guid: string): Promise<QueryStationResponse> {
 		const queryStationsResponse = await this.mariadb.Query<QueryStationResponse>(
 			`select
 						s.name as StationName, s.location as StationLocation, s.description as StationDescription, s.battery as StationBattery, s.guid as StationGuid, s.serial_number as StationSerialNumber, s.solar_panel as StationSolarPanel, s.status_flags as StationStatusFlags

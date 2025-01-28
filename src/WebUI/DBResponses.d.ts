@@ -1,20 +1,11 @@
 import {AllMeasurementType, AllMeasurementUnit} from "../Util/MeasurementUtil.js";
 
-export type QueryStationsForTenantResponse = {
-	StationName: string;
-	StationSerialNumber: string;
-}
-
 export type QueryStationMetaResponse = {
 	StationName: string;
 	StationLocation: string;
 	StationDescription: string;
 	StationBattery: number;
 	StationGuid: string;
-}
-
-export type QueryTenantNameResponse = {
-	TenantName: string;
 }
 
 export type QueryTenantIdResponse = {

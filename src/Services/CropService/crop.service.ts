@@ -181,6 +181,9 @@ export default class Service {
 		return Service.instance!;
 	}
 
+	/*
+	* Prüfe, ob ein Eintrag der CropDb für die gegebenen Wetterbedingungen passend ist
+	* */
 	public IsCropSuitableFor(crop: CropDbEntry, conditions: EnvRecord) {
 		const {minTemp, maxTemp, minHumidity, maxHumidity, minPressure, maxPressure} = crop.conditions;
 		return (
@@ -193,6 +196,9 @@ export default class Service {
 		);
 	}
 
+	/*
+	* Ein Array an Nutzpflanzen zurückgeben, die für einen gegebenen Datensatz an Wetterdaten passend sind
+	* */
 	public RecommendCropsFor(environmentalData: EnvRecord) {
 		const suitableCrops = this.CropDatabase.filter((crop) =>
 			this.IsCropSuitableFor(crop, environmentalData)

@@ -6,7 +6,7 @@ const router = express.Router();
 router.get(`/:station_id`, async (req, res) => {
 	const stationService = StationService.GetInstance();
 
-	const querySingleStationResponse = await stationService.QueryStationMeta(req.params.station_id);
+	const querySingleStationResponse = await stationService.QueryStation(req.params.station_id);
 	res.send(querySingleStationResponse);
 });
 

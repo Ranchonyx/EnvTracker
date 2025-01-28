@@ -47,6 +47,9 @@ export default class Service {
 		return Service.instance!;
 	}
 
+	/*
+	* Konvertiere ein Array an Messwerten eines Typs 'T' zu einem für Charts besser geeignetem Format
+	* */
 	public MapMeasurements<T extends AllMeasurementType, U extends AllMeasurementUnit>(pMeasurements: Array<Measurement<T, U>>): {
 		data: Array<number>;
 		label: T;
@@ -59,6 +62,9 @@ export default class Service {
 		}
 	}
 
+	/*
+	* Erzeuge ein Chart.JS-Kompatiblen Datensatz aus einem Label und einem Array an numerischen Werten
+	* */
 	public async CreateDataset(label: string, data: Array<number>): Promise<SingleChartDataset> {
 		this.log(`Created chart dataset with label "${label}"`);
 
@@ -73,8 +79,11 @@ export default class Service {
 		}
 	}
 
+	/*
+	* Erzeuge eine Chart.JS-Kompatible Chart-Datenstruktur aus einem Array an Labels, einem Array aus SingleChartDataset, einem Label für die X- und Y-Ache und einem Diagrammtyp
+	* */
 	public async CreateChart<MType extends "bar" | "line">(labels: Array<string>, datasets: Array<SingleChartDataset>, xAxisLabel: string, yAxisLabel: string, type: MType): Promise<ChartDataset<Array<string>, Array<SingleChartDataset>, MType>> {
-		this.log(`Created chart with labels [${labels.join(",")}] over ${xAxisLabel} and ${yAxisLabel}`);
+		this.log(`Created chart over ${xAxisLabel} and ${yAxisLabel}`);
 		return {
 			type: type,
 			data: {
@@ -97,6 +106,9 @@ export default class Service {
 		}
 	}
 
+	/*
+	* Helperfunktion um direkt aus einem Array an Messerten vom Typ 'T' ein SingleChartDataset zu erzeugen
+	* */
 	public async SingleChartFromMeasurement<
 		T extends AllMeasurementType,
 		U extends AllMeasurementUnit,

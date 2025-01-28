@@ -20,6 +20,9 @@ export default class Service {
 		return Service.instance!;
 	}
 
+	/*
+	* Die Mandanten-ID aus der HTTP-Anfrage extrahieren
+	* */
 	public async GetTenantId(req: express.Request): Promise<string | null> {
 		Guard.CastAs<Record<"loggedIn" | "username", any>>(req.session);
 		const username = req.session.username;
@@ -42,6 +45,9 @@ export default class Service {
 		return queryTenantIdResponse[0].TenantId;
 	}
 
+	/*
+	* Den Mandantennamen anhand einer Mandanten-ID ableiten
+	* */
 	public async GetTenantName(tenant_id: string): Promise<string> {
 		const queryTenantNameResponse = await this.mariadb.Query<QueryTenantNameResponse>(
 			`select
@@ -60,7 +66,7 @@ export default class Service {
 		return queryTenantNameResponse[0].TenantName;
 	}
 
-	public async RequestorIsTenant(req: express.Request): Promise<boolean> {
+	/*public async RequestorIsTenant(req: express.Request): Promise<boolean> {
 		Guard.CastAs<Record<"loggedIn" | "username", any>>(req.session);
 
 		const tenant_id = req.params.tenant_id;
@@ -84,5 +90,5 @@ export default class Service {
 		this.log(`result.TenantName ${result.TenantName} === tenant_id ${req.session.username} ? ${response}`)
 
 		return response;
-	}
+	}*/
 }

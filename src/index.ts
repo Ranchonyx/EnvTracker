@@ -10,14 +10,11 @@ import MariaDBSessionStore from "./WebUI/MariaDBSessionStore.js";
 import AppServer from "./WebUI/AppServer.js";
 import SocketReceiver from "./TCPSocketReceiver/TCPSocketReceiver.js";
 import {
-	AddSensorMeasurement,
-	CreateSensorIfNotExists,
 	TryParseMeasurementString
 } from "./Util/MeasurementUtil.js";
 import EventBus from "./EventBus/EventBus.js";
-import {schedule} from "node-cron";
-import PredictionService from "./Services/PredictionService/prediction.service.js";
-import Service from "./Services/MeasurementService/measurement.service.js";
+
+import SensorService from "./Services/SensorService/sensor.service.js"
 
 export type Config = {
 	MariaDB: MariaDBConnectorConfigSpec;
@@ -89,6 +86,8 @@ await appServer.InitialiseServices();
 await appServer.Start();
 
 const socketSrvLogger = LogManager.createLogger("TCP-Sockets", LogLevel.INFO);
+
+const sensorService = SensorService.GetInstance();
 const srv = new SocketReceiver(8787, socketSrvLogger, async (station_id, data) => {
 	//Trim off unnecessary semicolon
 	const sensorDataUTF8 = data.toString("utf8").slice(0, -1);
@@ -104,10 +103,11 @@ const srv = new SocketReceiver(8787, socketSrvLogger, async (station_id, data) =
 	//On incoming new records, notify all websockets for the source station that there is new data available in the database...
 	for (const recordArray of parsedSensorData) {
 		const sensorName = recordArray.sensorName;
-		await CreateSensorIfNotExists(mariadb, station_id, sensorName);
+		await sensorService.CreateSensorIfNotExists(station_id, sensorName);
 
 		for (const record of recordArray.records) {
-			await AddSensorMeasurement(mariadb, station_id, sensorName, record);
+			await sensorService.AddSensorMeasurement(station_id, sensorName, record);
+
 			await wire.dispatch("new-record", `${station_id}|${record.name}`);
 		}
 	}

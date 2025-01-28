@@ -24,12 +24,18 @@ export default class PredictionServiceRegistry {
 		return this.instance!;
 	}
 
+	/*
+	* PredictionService für eine gegebene Station abrufen
+	* */
 	public async GetPredictionService(station_id: string): Promise<PredictionService> {
 		const modelPath = `${this.modelDirectory}/${station_id}`;
 
 		return PredictionService.Instantiate(this.log, this.mariadb, modelPath, station_id);
 	}
 
+	/*
+	* Alle PredictionServices für alle verfügbaren Stationen vorinitialisieren
+	* */
 	public async InitialiseAllPredictionServices(): Promise<void> {
 		const stationService = StationService.GetInstance(this.log, this.mariadb);
 		const allIds = await stationService.QueryAllStationIds();
@@ -42,6 +48,9 @@ class PredictionService {
 	private model: Sequential | undefined;
 	private schedule: ScheduledTask;
 
+	/*
+	* Intervall-Trainingsfunktion
+	* */
 	private async TrainFn() {
 		//Train the model
 		const measurementService = MeasurementService.GetInstance();
@@ -70,6 +79,11 @@ class PredictionService {
 		}, {runOnInit: true})
 	}
 
+	/*
+	* Existierendes Modell laden oder neu erzeugen
+	*
+	* Dazu wird ein neuronales Netz mit einer 3x2 Matrix erstellt, welches in 16 Neuronen leitet, welche in 32 Neuronen leiten, welche in 16 Neuronen leiten, welche in 8 Neuronen leiten, welche in ein Ausgabeneuron leiten
+	* */
 	public static async Instantiate(log: RegisteredLogger, mariadb: MariaDBConnector, modelPath: string, station_id: string): Promise<PredictionService> {
 		log("Subservice Init");
 
@@ -138,6 +152,9 @@ class PredictionService {
 		return instance;
 	}
 
+	/*
+	* Time-Series-Forecasting Sequenzen aus Temperaturen und Luftfeuchtigkeiten generieren
+	* */
 	public CreateSequences(temperatures: Array<number>, humidities: Array<number>, sequenceLength: number) {
 		const inputs: Array<Array<Array<number>>> = []; // 3D array to store sequences
 		const outputs: Array<number> = [];
@@ -157,6 +174,9 @@ class PredictionService {
 		return {inputs, outputs};
 	}
 
+	/*
+	* Modell anhand von Temperaturen und Luftfeuchtigkeiten trainieren
+	* */
 	public async Train(temperatures: Array<number>, humidities: Array<number>) {
 		const p1 = performance.now();
 		Guard.AgainstNullish(this.model);
@@ -184,16 +204,22 @@ class PredictionService {
 		await this.SaveModel();
 	}
 
+	/*
+	* Vorhersage des Modells ausführen
+	*
+	* Momentan sagt das Modell die Temperaturen vorher.
+	* */
 	public async Predict(station_guid: string) {
 		const measurementService = MeasurementService.GetInstance();
 
-		const today = new Date().toISOString();
+		const now = new Date().toISOString();
 
-		const startDate = new Date(today);
-		startDate.setDate(startDate.getDate() - 3);
+		const startDate = new Date(now);
+		startDate.setDate(startDate.getDate() - 1);
+		startDate.setHours(0, 0, 0, 0);
 
-		const validTemperatures = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Temperature", startDate.toISOString(), today);
-		const validHumidities = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Humidity", startDate.toISOString(), today);
+		const validTemperatures = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Temperature", startDate.toISOString(), now);
+		const validHumidities = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Humidity", startDate.toISOString(), now);
 
 		if (validTemperatures.length === 0 || validHumidities.length === 0)
 			return [];
@@ -213,13 +239,19 @@ class PredictionService {
 		return Array.from(predictedValues);
 	}
 
-	public async SaveModel() {
+	/*
+	* Aktives Vorhersagemodell speichern
+	* */
+	private async SaveModel() {
 		this.log("Saving model...")
 		Guard.AgainstNullish(this.model);
 		await this.model.save(this.modelPath);
 	}
 
-	public async LoadModel(): Promise<boolean> {
+	/*
+	* Ein Vorhersagemodell laden
+	* */
+	private async LoadModel(): Promise<boolean> {
 		const canLoad = existsSync(this.modelPath.slice(7));
 		if (!canLoad)
 			return false;

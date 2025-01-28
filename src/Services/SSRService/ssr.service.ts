@@ -17,6 +17,9 @@ export default class Service {
 		return Service.instance!;
 	}
 
+	/*
+	* Ein EJS-Template mit einem Datensatz an Variablen serverseitig rendern
+	* */
 	public async Render<Vars extends Record<string, any> = Record<string, any>>(pTemplate: string, pOpts: Vars): Promise<string> {
 		const perf1 = performance.now();
 		return new Promise<string>((resolve, reject) => {

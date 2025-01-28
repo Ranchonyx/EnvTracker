@@ -5,13 +5,13 @@ import {execSync} from "node:child_process";
 type SensorIdent = "hp20x" | "sen55" | "sht45" | "ina3221";
 type SensorMapping = Record<SensorIdent, Array<string>>;
 
-type MappedSensorMeasurement = {
+export type MappedSensorMeasurement = {
 	name: string;
 	unit: string;
 	value: number;
 }
 
-type SensorMeasurementRecords = {
+export type SensorMeasurementRecords = {
 	sensorName: SensorIdent;
 	records: Array<MappedSensorMeasurement>;
 }
@@ -47,22 +47,22 @@ export type AllMeasurementType =
 export type AllMeasurementUnit = "°C" | "hPa" | "m" | "µg/m³" | "%" | "scalar" | "V" | "A";
 
 export const AvailableMeasurementTypes: Array<AllMeasurementType> = [
+	"Temperature",
+	"Humidity",
+	"Pressure",
+	"N² Compounds",
+	"Volatile Compounds",
+	"Altitude",
 	"pm1p0",
 	"pm10",
 	"pm2p5",
 	"pm4p0",
-	"Humidity",
-	"Temperature",
-	"Pressure",
-	"Altitude",
-	"N² Compounds",
-	"Volatile Compounds",
-	"Battery Amperage",
-	"Solar Amperage",
-	"System Amperage",
 	"System Voltage",
+	"System Amperage",
+	"Solar Voltage",
+	"Solar Amperage",
 	"Battery Voltage",
-	"Solar Voltage"
+	"Battery Amperage"
 ];
 
 function mapMeasurements(name: string, measurements: Array<string>): Array<MappedSensorMeasurement> {
@@ -114,53 +114,6 @@ export function TryParseMeasurementString(stationData: string): Array<SensorMeas
 	} catch (ex) {
 		return null;
 	}
-}
-
-export async function GetSensorGuidByNameAndStationId(mdb_api: MariaDBConnector, sensorName: string, stationId: string): Promise<string | null> {
-	const response = await mdb_api.Query<Record<"guid", string>>(
-		`
-		SELECT
-			guid
-		FROM
-			sensor
-		WHERE
-			station_guid = '${stationId}' AND LOWER(name) = '${sensorName.toLowerCase()}'
-		`
-	);
-
-	if (!response)
-		return null;
-
-	if (response.length === 0)
-		return null;
-
-	return response[0].guid;
-
-}
-
-export async function CreateSensorIfNotExists(mdb_api: MariaDBConnector, station_guid: string, name: string) {
-	const exists = await mdb_api.Exists("sensor", "name", name);
-	if (exists)
-		return;
-
-	return mdb_api.Query(
-		`INSERT INTO sensor (station_guid, name, status_flags) VALUES ('${station_guid}', '${name}', 0)`
-	);
-}
-
-export async function AddSensorMeasurement(mdb_api: MariaDBConnector, station_guid: string, sensorName: string, measurement: MappedSensorMeasurement) {
-	const sensor_guid = await GetSensorGuidByNameAndStationId(mdb_api, sensorName, station_guid);
-	Guard.AgainstNullish(sensor_guid);
-
-	const insertTimestamp = new Date().toISOString();
-	let {value, unit, name} = measurement;
-
-	if(name === "Altitude")
-		value = 44.801;
-
-	return mdb_api.Query(
-		`INSERT INTO measurement (sensor_guid, timestamp, unit, value, name) VALUES ('${sensor_guid}', '${insertTimestamp}', '${unit}', ${value}, '${name}')`
-	);
 }
 
 export function GetBuildNumber(): number {

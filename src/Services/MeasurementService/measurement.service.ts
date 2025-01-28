@@ -19,10 +19,16 @@ export default class Service {
 		return Service.instance!;
 	}
 
+	/*
+	* Helperfunktion um ein ISO-8601 Zeitstempel in einen MariaDB-Kompatiblen Zeitstempel umzuwandeln
+	* */
 	private ToMDBDate(isoString: string) {
 		return isoString.replace(/[TZ]/gm, " ").trim();
 	}
 
+	/*
+	* Helperfunktion um die aus MariaDB zurück gegebenen Messwerte in tatsächliche Floats zu konvertieren
+	* */
 	private Convert<T extends AllMeasurementType, U extends AllMeasurementUnit>(pMeasurements: Array<Measurement<T, U>>): Array<Measurement<T, U>> {
 		return pMeasurements.map(m => {
 			return {
@@ -34,6 +40,9 @@ export default class Service {
 		})
 	}
 
+	/*
+	* Messwerte der Typ/en 'T' einer Station mit dem offset 'rows' abrufen
+	* */
 	public async QueryMeasurementsOfType<T extends AllMeasurementType, U extends AllMeasurementUnit>(station_guid: string, rows: number | "all", ...types: Array<T>): Promise<Array<Measurement<T, U>>> {
 		const constraint = types
 			.map(type => `'${type}'`)
@@ -67,12 +76,19 @@ export default class Service {
 		return this.Convert(response);
 	}
 
+	/*
+	* Messwerte des Typs 'T' einer Station abfragen.
+	*
+	* Hier können optional eine Zeitreichweite via "ISOStart" und "ISOEnd" übergeben werden, um die Wertemenge zeitlich einzugrenzen.
+	*
+	* Des Weiteren kann hier ein "groupBy"-Argument übergeben werden, was die Messwerte über Stunden, Minuten oder beide gruppiert.
+	* */
 	public async QueryMeasurementsOfTypeInDateRange<T extends AllMeasurementType, U extends AllMeasurementUnit>(station_guid: string, pType: AllMeasurementType | "all", ISOStart?: string, ISOEnd?: string, groupedBy?: "HOUR" | "MINUTE" | "HOUR_AND_MINUTE"): Promise<Array<Measurement<T, U>>> {
 		const whereClauseOrEmptyString = ISOStart && ISOEnd
 			? `where CAST(timestamp as datetime) between '${this.ToMDBDate(ISOStart)}' and '${this.ToMDBDate(ISOEnd)}'`
 			: "";
 
-		let groupByClause = "";
+		let groupByClause;
 		switch (groupedBy) {
 			case "HOUR":
 				groupByClause = "HOUR(CAST(timestamp as datetime)) + 1";
@@ -109,27 +125,6 @@ export default class Service {
 			`
 		);
 
-		/*
-		*
-				WITH LatestData AS
-				(
-					SELECT m.unit, m.value, m.name, m.timestamp
-					FROM
-						measurement m
-					LEFT JOIN
-						sensor s
-					ON
-						s.station_guid = 'e7ce4d5e-b6f9-11ef-b475-d0ad089b010b'
-					WHERE
-						m.name = 'Temperature' and s.station_guid = 'e7ce4d5e-b6f9-11ef-b475-d0ad089b010b'
-				)
-				SELECT
-					name, unit, AVG(value) as value, HOUR(CAST(timestamp as datetime)) as timestamp
-				FROM
-					LatestData where CAST(timestamp as datetime) between '2025-01-23 23:00:00.000' and '2025-01-24 22:59:59.999'
-				GROUP BY HOUR(CAST(timestamp as datetime)), name, unit
-		* */
-
 		this.log(`Queried measurements of type "${pType}" in date range ${ISOStart} - ${ISOEnd} for station ${station_guid}`);
 		if (!response || response.length === 0)
 			return [];
@@ -137,18 +132,27 @@ export default class Service {
 		return this.Convert(response);
 	}
 
+	/*
+	* Neuste Messwerte eines Typs 'T' einer Station abrufen
+	* */
 	public async QueryLatestMeasurementsOfType<T extends AllMeasurementType, U extends AllMeasurementUnit>(station_guid: string, ...types: Array<T>): Promise<Array<Measurement<T, U>>> {
 		this.log(`Queried latest measurements of type [${types.join(",")}] for ${station_guid}`);
 
 		return this.QueryMeasurementsOfType<T, U>(station_guid, 1, ...types);
 	}
 
+	/*
+	* Status-Briefing einer Station abrufen
+	* */
 	public async QueryStatusForStation(station_guid: string) {
 		this.log(`Queried brief measurement staus for station ${station_guid}`);
 
 		return this.QueryLatestMeasurementsOfType(station_guid, "Temperature", "Humidity", "Pressure", "Battery Voltage");
 	}
 
+	/*
+	* Aus einem Array an Messwerten des Typs 'T' eine Aggregation ziehen
+	* */
 	public AggregateMeasurements<T extends AllMeasurementType, U extends AllMeasurementUnit>(pMeasurements: Array<Measurement<T, U>>, type: "min" | "max" | "avg"): number {
 		const values = pMeasurements.map(m => parseFloat(m.value + ""));
 		switch (type) {
@@ -161,6 +165,9 @@ export default class Service {
 		}
 	}
 
+	/*
+	* Alle verfügbaren Messwert-Typen abfragen
+	* */
 	public async QueryAvailableMeasurementTypes(): Promise<Array<AllMeasurementType>> {
 		return AvailableMeasurementTypes;
 	}
