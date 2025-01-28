@@ -165,20 +165,23 @@ class PredictionService {
 	/*
 	* Time-Series-Forecasting Sequenzen aus Temperaturen und Luftfeuchtigkeiten generieren
 	* */
-	public CreateSequences(temperatures: Array<number>, humidities: Array<number>, sequenceLength: number) {
+	public CreateSequences(temperatures: Array<number>, humidities: Array<number>, sequenceLength: number, predictSteps: number) {
 		const inputs: Array<Array<Array<number>>> = []; // 3D array to store sequences
-		const outputs: Array<number> = [];
+		const outputs: Array<Array<number>> = [];
 
 		// Generate sequences of temperature and humidity pairs
-		for (let i = 0; i < temperatures.length - sequenceLength; i++) {
+		for (let i = 0; i < temperatures.length - sequenceLength - predictSteps + 1; i++) {
 			const inputSequence: Array<Array<number>> = [];
-			for (let j = i; j < i + sequenceLength; j++) {
-				// Each sequence element is a pair of [temperature, humidity]
+			const outputSequence: Array<number> = [];
+
+			for (let j = i; j < i + sequenceLength; j++)
 				inputSequence.push([temperatures[j], humidities[j]]);
-			}
+
+			for (let k = 0; k < predictSteps; k++)
+				outputSequence.push(temperatures[i + sequenceLength + k]);
 
 			inputs.push(inputSequence); // Push the sequence (3 pairs of [temperature, humidity])
-			outputs.push(temperatures[i + sequenceLength]); // Output: the next temperature after the sequence
+			outputs.push(outputSequence); // Output: the next temperature after the sequence
 		}
 
 		return {inputs, outputs};
@@ -193,7 +196,7 @@ class PredictionService {
 		const epochs = 500;
 
 		try {
-			const {inputs, outputs} = this.CreateSequences(temperatures, humidities, 3);
+			const {inputs, outputs} = this.CreateSequences(temperatures, humidities, 3, 8);
 
 			const inputTensor = tf.tensor3d(inputs, [inputs.length, 3, 2]);  // 3 features: [temperature, humidity] pair, sequence length = 3
 			const outputTensor = tf.tensor2d(outputs, [outputs.length, 1]); // 1 output (predicted temperature)
@@ -234,19 +237,31 @@ class PredictionService {
 		if (validTemperatures.length === 0 || validHumidities.length === 0)
 			return [];
 
-		const {inputs} = this.CreateSequences(validTemperatures.map(e => e.value), validHumidities.map(e => e.value), 3);
+		const inputSequence: Array<Array<number>> = [];
+		const lastTemperatures = validTemperatures
+			.slice(-3)
+			.map(e => e.value);
+		const lastHumidities = validHumidities
+			.slice(-3)
+			.map(e => e.value);
 
+		for(let i = 0; i < 3; i++) {
+			inputSequence.push([lastTemperatures[i], lastHumidities[i]]);
+		}
+
+		const inputTensor = tf.tensor3d([inputSequence], [1, 3, 2]);
+		/*
 		const inputTensor = tf.tensor3d(inputs, [inputs.length, 3, 2]);
-
+*/
 		const predictions = this.model!.predict(inputTensor) as Tensor;
 
-		this.log(`Predicting next temperature data ...`);
+		this.log(`Predicting future temperatures ...`);
 
-		const predictedValues = predictions.dataSync();
+		const predictedValues = predictions.arraySync() as Array<number>;
 
-		this.log(Array.from(predictedValues));
+		this.log(predictedValues);
 
-		return Array.from(predictedValues);
+		return predictedValues;
 	}
 
 	/*
