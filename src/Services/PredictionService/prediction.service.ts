@@ -96,7 +96,7 @@ class PredictionService {
 		} else {
 
 			//If that fails, set up the model, compile it and save it
-			instance.model = tf.sequential({name: "envtrack-temperature"});
+			instance.model = tf.sequential({name: "envtrack-turritopsis"});
 
 			// Input layer (flatten the 3x2 input into a 6D vector)
 			instance.model.add(tf.layers.flatten({inputShape: [3, 2]}));
@@ -148,6 +148,16 @@ class PredictionService {
 			loss: 'meanSquaredError',  // Loss function for regression
 			metrics: ['mae'],          // Mean Absolute Error for evaluation
 		});
+
+		const totalNeurons: Array<number> = (instance.model?.layers as Array<ReturnType<typeof tf.layers["dense"]>>)
+			///@ts-expect-error
+			.map(layer => layer.units)
+			.filter(l => l !== undefined)
+			.reduce((acc, v) => acc + v, 0);
+
+		const totalLayers = instance.model?.layers.length;
+
+		log(`Model "${instance.model?.name}" (adam, meanSquaredError, ${totalLayers} layers, ${totalNeurons} neurons, ) loaded.`)
 
 		return instance;
 	}
