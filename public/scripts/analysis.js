@@ -33,7 +33,7 @@ async function RenderChartAndDisplays() {
     const typeDataRequest = await fetch(`/measurement/${getStationId()}/Temperature?forDay=${today}`);
     const temperatureData = await typeDataRequest.json();
 
-    const predictionDataRequest = await fetch(`/prediction/${getStationId()}/predictTemperature`);
+    const predictionDataRequest = await fetch(`/prediction/${getStationId()}/predict`);
     const predictionData = await predictionDataRequest.json();
 
     const chartDataResponse = await fetch(`/chart/${myStationId}/transform`, {

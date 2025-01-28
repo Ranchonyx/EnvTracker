@@ -1,9 +1,6 @@
 import express from "express";
-import ChartService from "../Services/ChartService/chart.service.js";
 import MeasurementService from "../Services/MeasurementService/measurement.service.js";
-import StationService from "../Services/StationService/station.service.js"
-import {AllMeasurementType, AllMeasurementUnit} from "../Util/MeasurementUtil.js";
-import {Measurement, QueryStationStatusResponse} from "../WebUI/DBResponses.js";
+import {AllMeasurementType} from "../Util/MeasurementUtil.js";
 import {OmitMany} from "../Util/Omit.js";
 import {Guard} from "../Util/Guard.js";
 import Service from "../Services/ChartService/chart.service.js";
