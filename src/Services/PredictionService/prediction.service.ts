@@ -199,7 +199,7 @@ class PredictionService {
 			const {inputs, outputs} = this.CreateSequences(temperatures, humidities, 3, 8);
 
 			const inputTensor = tf.tensor3d(inputs, [inputs.length, 3, 2]);  // 3 features: [temperature, humidity] pair, sequence length = 3
-			const outputTensor = tf.tensor2d(outputs, [outputs.length, 1]); // 1 output (predicted temperature)
+			const outputTensor = tf.tensor2d(outputs, [outputs.length, 8]); // 1 output (predicted temperature)
 
 			await this.model!.fit(inputTensor, outputTensor, {
 				epochs: epochs,
