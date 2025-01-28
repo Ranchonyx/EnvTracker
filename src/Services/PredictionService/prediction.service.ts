@@ -184,7 +184,7 @@ class PredictionService {
 		await this.SaveModel();
 	}
 
-	public async Predict(station_guid: string, limit: number = 10) {
+	public async Predict(station_guid: string) {
 		const measurementService = MeasurementService.GetInstance();
 
 		const today = new Date().toISOString();
@@ -195,13 +195,10 @@ class PredictionService {
 		const validTemperatures = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Temperature", startDate.toISOString(), today);
 		const validHumidities = await measurementService.QueryMeasurementsOfTypeInDateRange(station_guid, "Humidity", startDate.toISOString(), today);
 
-		if(validTemperatures.length === 0 || validHumidities.length === 0)
+		if (validTemperatures.length === 0 || validHumidities.length === 0)
 			return [];
 
-		const temperatures = validTemperatures.slice(0, limit);
-		const humidities = validHumidities.slice(0, limit);
-
-		const {inputs} = this.CreateSequences(temperatures.map(e => e.value), humidities.map(e => e.value), 3);
+		const {inputs} = this.CreateSequences(validTemperatures.map(e => e.value), validHumidities.map(e => e.value), 3);
 
 		const inputTensor = tf.tensor3d(inputs, [inputs.length, 3, 2]);
 
