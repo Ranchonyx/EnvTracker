@@ -27,7 +27,7 @@ function getStationId() {
 }
 
 async function fetchMeasurement(station_id, type, timeFrameParams, groupingParams, aggregation = undefined) {
-    const aggregationParams = aggregation ? `?aggregation=${aggregation}` : ""
+    const aggregationParams = aggregation ? `&aggregation=${aggregation}` : ""
     return await fetch(`/measurement/${station_id}/${type}?${timeFrameParams}${groupingParams}${aggregationParams}`);
 }
 
