@@ -1,4 +1,6 @@
 import {RegisteredLogger} from "../../Logger/Logger.js";
+import {AllMeasurementType, AllMeasurementUnit} from "../../Util/MeasurementUtil.js";
+import {Measurement} from "../../WebUI/DBResponses.js";
 
 type RGBString = `rgba(${number}, ${number}, ${number}, ${number})`;
 
@@ -45,6 +47,18 @@ export default class Service {
 		return Service.instance!;
 	}
 
+	public MapMeasurements<T extends AllMeasurementType, U extends AllMeasurementUnit>(pMeasurements: Array<Measurement<T, U>>): {
+		data: Array<number>;
+		label: T;
+		unit: U;
+	} {
+		return {
+			label: pMeasurements[0].name,
+			data: pMeasurements.map(m => parseFloat(m.value + "")),
+			unit: pMeasurements[0].unit,
+		}
+	}
+
 	public async CreateDataset(label: string, data: Array<number>): Promise<SingleChartDataset> {
 		this.log(`Created chart dataset with label "${label}"`);
 
@@ -59,10 +73,10 @@ export default class Service {
 		}
 	}
 
-	public async CreateChart(labels: Array<string>, datasets: Array<SingleChartDataset>, xAxisLabel: string, yAxisLabel: string): Promise<ChartDataset<Array<string>, Array<SingleChartDataset>, "line">> {
+	public async CreateChart<MType extends "bar" | "line">(labels: Array<string>, datasets: Array<SingleChartDataset>, xAxisLabel: string, yAxisLabel: string, type: MType): Promise<ChartDataset<Array<string>, Array<SingleChartDataset>, MType>> {
 		this.log(`Created chart with labels [${labels.join(",")}] over ${xAxisLabel} and ${yAxisLabel}`);
 		return {
-			type: "line",
+			type: type,
 			data: {
 				labels: labels,
 				datasets: datasets
@@ -81,5 +95,17 @@ export default class Service {
 				}
 			}
 		}
+	}
+
+	public async SingleChartFromMeasurement<
+		T extends AllMeasurementType,
+		U extends AllMeasurementUnit,
+		MType extends "line" | "bar"
+	>(pMeasurements: Array<Measurement<T, U>>, type: MType): Promise<ChartDataset<Array<string>, Array<SingleChartDataset>, MType>> {
+
+		const mapped = this.MapMeasurements(pMeasurements);
+		const dataset = await this.CreateDataset(mapped.label, mapped.data);
+
+		return this.CreateChart(pMeasurements.map(m => m.timestamp), [dataset], mapped.label, mapped.unit, type);
 	}
 }

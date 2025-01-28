@@ -6,6 +6,7 @@ import {AllMeasurementType, AllMeasurementUnit} from "../Util/MeasurementUtil.js
 import {Measurement, QueryStationStatusResponse} from "../WebUI/DBResponses.js";
 import {OmitMany} from "../Util/Omit.js";
 import {Guard} from "../Util/Guard.js";
+import Service from "../Services/ChartService/chart.service.js";
 
 const router = express.Router();
 
@@ -31,6 +32,8 @@ router.get("/:station_id/:type", async (req, res) => {
 		to?: string;
 		forDay?: string;
 		groupBy?: "HOUR" | "MINUTE" | "HOUR_AND_MINUTE";
+		chart?: "bar" | "line";
+		aggregation?: "avg" | "min" | "max";
 	}>(req.query);
 	Guard.CastAs<AllMeasurementType>(req.params.type);
 
@@ -38,7 +41,10 @@ router.get("/:station_id/:type", async (req, res) => {
 	const {station_id, type} = req.params;
 
 	const measurementService = MeasurementService.GetInstance();
+	const chartService = Service.GetInstance();
+
 	const AvailableMeasurementTypes = await measurementService.QueryAvailableMeasurementTypes();
+
 	if (!AvailableMeasurementTypes.includes(type as AllMeasurementType)) {
 		res.status(400).send("No such measurement type available.");
 		return;
@@ -48,21 +54,50 @@ router.get("/:station_id/:type", async (req, res) => {
 	const shouldSendRangeData = to !== undefined && from !== undefined && forDay === undefined;
 	const shouldSendDayData = to === undefined && from === undefined && forDay !== undefined;
 
+	const shouldSendChartData = req.query.chart !== undefined;
+	const shouldSendAggregationData = req.query.aggregation !== undefined;
+
 	if (!shouldSendAllData && !shouldSendRangeData && !shouldSendDayData) {
 		res.status(400).send("Invalid query parameters.");
 		return;
 	}
 
+	/*
+	* 	const dataset = await chartService.CreateDataset(label, measurementData.map(e => e.value));
+	const chartData = await chartService.CreateChart(measurementData.map(e => e.timestamp), [dataset], label, unit);
+
+	* */
+
 	if (shouldSendAllData) {
 		const allDataForType = await measurementService.QueryMeasurementsOfType(station_id, "all", type);
+		if (shouldSendChartData) {
+			const asChart = chartService.SingleChartFromMeasurement(allDataForType, req.query.chart!);
+			res.send(asChart);
+			return;
+		}
+
+		if(shouldSendAggregationData) {
+			res.send(measurementService.AggregateMeasurements(allDataForType, req.query.aggregation!));
+			return;
+		}
+
 		res.send(allDataForType);
-		return;
 	}
 
 	if (shouldSendRangeData) {
 		const rangedDataForType = await measurementService.QueryMeasurementsOfTypeInDateRange(station_id, type, from, to, groupBy);
+		if (shouldSendChartData) {
+			const asChart = chartService.SingleChartFromMeasurement(rangedDataForType, req.query.chart!);
+			res.send(asChart);
+			return;
+		}
+
+		if(shouldSendAggregationData) {
+			res.send(measurementService.AggregateMeasurements(rangedDataForType, req.query.aggregation!));
+			return;
+		}
+
 		res.send(rangedDataForType);
-		return;
 	}
 
 	if (shouldSendDayData) {
@@ -73,8 +108,19 @@ router.get("/:station_id/:type", async (req, res) => {
 		dayEnd.setHours(24, 59, 59, 999);
 
 		const dayDataForType = await measurementService.QueryMeasurementsOfTypeInDateRange(station_id, type, dayStart.toISOString(), dayEnd.toISOString(), groupBy);
+
+		if (shouldSendChartData) {
+			const asChart = chartService.SingleChartFromMeasurement(dayDataForType, req.query.chart!);
+			res.send(asChart);
+			return;
+		}
+
+		if(shouldSendAggregationData) {
+			res.send(measurementService.AggregateMeasurements(dayDataForType, req.query.aggregation!));
+			return;
+		}
+
 		res.send(dayDataForType);
-		return;
 	}
 })
 

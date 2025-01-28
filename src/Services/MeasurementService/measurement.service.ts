@@ -149,6 +149,18 @@ export default class Service {
 		return this.QueryLatestMeasurementsOfType(station_guid, "Temperature", "Humidity", "Pressure", "Battery Voltage");
 	}
 
+	public AggregateMeasurements<T extends AllMeasurementType, U extends AllMeasurementUnit>(pMeasurements: Array<Measurement<T, U>>, type: "min" | "max" | "avg"): number {
+		const values = pMeasurements.map(m => parseFloat(m.value + ""));
+		switch (type) {
+			case "min":
+				return Math.min(...values);
+			case "max":
+				return Math.max(...values);
+			case "avg":
+				return values.reduce((acc, v) => acc + v, 0) / values.length;
+		}
+	}
+
 	public async QueryAvailableMeasurementTypes(): Promise<Array<AllMeasurementType>> {
 		return AvailableMeasurementTypes;
 	}

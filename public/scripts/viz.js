@@ -26,6 +26,11 @@ function getStationId() {
     return sessionStorage.getItem("last-station");
 }
 
+async function fetchMeasurement(station_id, type, timeFrameParams, groupingParams, aggregation = undefined) {
+    const aggregationParams = aggregation ? `?aggregation=${aggregation}` : ""
+    return await fetch(`/measurement/${myStationId}/${type}?${timeFrameParams}${groupingParams}${aggregationParams}`);
+}
+
 async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) {
     const today = new Date().toISOString();
 
@@ -38,23 +43,26 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
     const groupingParams = `&groupBy=${localStorage.getItem("last-group") || "HOUR_AND_MINUTE"}`;
 
     const myStationId = getStationId();
-    const typeDataRequest = await fetch(`/measurement/${getStationId()}/${type}?${timeFrameParams}${groupingParams}`);
-    const typeData = await typeDataRequest.json();
+    const chartRequest = await fetch(`/measurement/${myStationId}/${type}?${timeFrameParams}${groupingParams}&chart=line`);
+    const chartData = await chartRequest.json();
 
-    const chartDataResponse = await fetch(`/chart/${myStationId}/transform`, {
-        method: "POST",
-        body: JSON.stringify(typeData),
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-    });
+    const unit = chartData.options.scales.y.title.text;
+
+    const [
+        max,
+        min,
+        avg
+    ] = await Promise.all([
+        await fetchMeasurement(myStationId, type, timeFrameParams, groupingParams, "max"),
+        await fetchMeasurement(myStationId, type, timeFrameParams, groupingParams, "min"),
+        await fetchMeasurement(myStationId, type, timeFrameParams, groupingParams, "avg")
+    ]);
 
     const maxValueElement = document.querySelector("#maxValue");
     const minValueElement = document.querySelector("#minValue");
     const avgValueElement = document.querySelector("#averageValue");
 
-    if (chartDataResponse.status === 400) {
+    if (chartRequest.status === 400) {
         //No data for today... render a message
         ChartRenderer.renderMessage("Keine Messwerte verfügbar");
         maxValueElement.textContent = "--";
@@ -64,18 +72,9 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
         return;
     }
 
-    const chartData = await chartDataResponse.json();
-
-
-    maxValueElement.textContent = `${Math.max(...typeData.map(e => parseFloat(e.value))).toFixed(2)} ${typeData[0].unit}`;
-    minValueElement.textContent = `${Math.min(...typeData.map(e => parseFloat(e.value))).toFixed(2)} ${typeData[0].unit}`;
-
-    const accumulated = typeData
-        .map(e => parseFloat(e.value))
-        .reduce((acc, v) => acc + v, 0);
-
-    avgValueElement.textContent = `${(accumulated / typeData.length).toFixed(2)} ${typeData[0].unit}`;
-
+    maxValueElement.textContent = `${max} ${unit}`;
+    minValueElement.textContent = `${min} ${unit}`;
+    avgValueElement.textContent = `${avg} ${unit}`;
 
     globalThis.ChartRenderer.render(chartData);
 }
@@ -84,7 +83,7 @@ async function HandleWebsocketResponse(message) {
     const json = JSON.parse(message);
 
     //Update existing chart with new dataaaaa
-    if(json.data === localStorage.getItem("last-type")) {
+    if (json.data === localStorage.getItem("last-type")) {
         await RenderChartAndDisplays(json.data);
     }
 }
