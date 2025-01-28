@@ -32,7 +32,10 @@ function buildListEntry(crop) {
 }
 
 async function UpdateRecommendedCrops(measurements) {
-    const sidebar = document.querySelector('.sidebar');
+    const cropList = document.querySelector('.crop-list');
+    while (cropList.children.length > 0)
+        cropList.removeChild(cropList.firstChild);
+
     const recommendedCrops = await fetch(`/crop/${sessionStorage.getItem("last-station")}/recommendCrops`, {
         method: "POST",
         body: JSON.stringify(measurements),
@@ -45,13 +48,13 @@ async function UpdateRecommendedCrops(measurements) {
     const crops = await recommendedCrops.json();
 
     if (crops.length === 0) {
-        sidebar.appendChild(buildListEntry("Keine Empfohlenen Pflanzenkulturen"));
+        cropList.appendChild(buildListEntry("Keine Empfohlenen Pflanzenkulturen"));
         return;
     }
 
     for (const crop of crops) {
         const li = buildListEntry(crop);
-        sidebar.appendChild(li);
+        cropList.appendChild(li);
     }
 }
 

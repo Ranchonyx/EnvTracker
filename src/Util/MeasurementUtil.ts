@@ -1,5 +1,6 @@
 import MariaDBConnector from "../MariaDBConnector/MariaDBConnector.js";
 import {Guard} from "./Guard.js";
+import {execSync} from "node:child_process";
 
 type SensorIdent = "hp20x" | "sen55" | "sht45" | "ina3221";
 type SensorMapping = Record<SensorIdent, Array<string>>;
@@ -160,4 +161,9 @@ export async function AddSensorMeasurement(mdb_api: MariaDBConnector, station_gu
 	return mdb_api.Query(
 		`INSERT INTO measurement (sensor_guid, timestamp, unit, value, name) VALUES ('${sensor_guid}', '${insertTimestamp}', '${unit}', ${value}, '${name}')`
 	);
+}
+
+export function GetBuildNumber(): number {
+	const gitRevBuffer = execSync("git rev-list --count --all");
+	return parseInt(gitRevBuffer.toString().trim(), 10);
 }

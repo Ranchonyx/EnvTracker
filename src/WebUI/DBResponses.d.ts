@@ -21,6 +21,10 @@ export type QueryTenantIdResponse = {
 	TenantId: string;
 }
 
+export type QueryTenantNameResponse = {
+	TenantName: string;
+}
+
 export type QueryStationResponse = QueryStationMetaResponse & {
 	StationSerialNumber: string;
 	StationSolarPanel: number;

@@ -53,9 +53,9 @@ export default class Service {
 		unit: U;
 	} {
 		return {
-			label: pMeasurements[0].name,
-			data: pMeasurements.map(m => parseFloat(m.value + "")),
-			unit: pMeasurements[0].unit,
+			label: pMeasurements[0]?.name || "No label",
+			data: pMeasurements.map(m => parseFloat(m.value + "")) || [],
+			unit: pMeasurements[0]?.unit || "No unit",
 		}
 	}
 

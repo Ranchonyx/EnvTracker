@@ -35,12 +35,29 @@ export default class Service {
 
 		Guard.AgainstNullish(queryTenantIdResponse);
 
-
 		this.log(`Queried tenant id for request => ${queryTenantIdResponse[0]?.TenantId || null}`);
 		if (queryTenantIdResponse.length === 0)
 			return null;
 
 		return queryTenantIdResponse[0].TenantId;
+	}
+
+	public async GetTenantName(tenant_id: string): Promise<string> {
+		const queryTenantNameResponse = await this.mariadb.Query<QueryTenantNameResponse>(
+			`select
+					c.id as TenantName
+				from
+					credential c
+				where
+					c.guid = '${tenant_id}'
+			`);
+
+		Guard.AgainstNullish(queryTenantNameResponse);
+
+		this.log(`Queried tenant name for id '${tenant_id}' => ${queryTenantNameResponse[0]?.TenantName || null}`);
+		Guard.AgainstNullish(queryTenantNameResponse[0].TenantName);
+
+		return queryTenantNameResponse[0].TenantName;
 	}
 
 	public async RequestorIsTenant(req: express.Request): Promise<boolean> {

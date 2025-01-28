@@ -3,6 +3,8 @@ import {Guard} from "../Util/Guard.js";
 import TenantService from "../Services/TenantService/tenant.service.js";
 import StationService from "../Services/StationService/station.service.js"
 import RenderingService from "../Services/SSRService/ssr.service.js";
+import {execSync} from "node:child_process";
+import {GetBuildNumber} from "../Util/MeasurementUtil.js";
 
 function generatePastelColor(seed: string) {
 	// Simple hash function to turn the seed string into a number
@@ -48,8 +50,14 @@ router.get("/", async (req, res) => {
 	Guard.AgainstNullish(tenantId);
 
 	const stationsMeta = await stationService.QueryStationsForTenant(tenantId);
-	const meta = stationsMeta.map(e => Object({ImageColour: generatePastelColor(e.StationGuid), ...e}));
-	const rendered = await renderingService.Render("pages/home", {stations: meta.reverse()});
+
+	const homeMeta = {
+		stations: stationsMeta.map(e => Object({ImageColour: generatePastelColor(e.StationGuid), ...e})).reverse(),
+		buildNumber: GetBuildNumber(),
+		login: await tenantService.GetTenantName(tenantId)
+	}
+
+	const rendered = await renderingService.Render("pages/home", homeMeta);
 
 	res.send(rendered);
 

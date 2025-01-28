@@ -1,12 +1,23 @@
 import express from "express";
 import RenderingService from "../Services/SSRService/ssr.service.js";
+import {GetBuildNumber} from "../Util/MeasurementUtil.js";
+import TenantService from "../Services/TenantService/tenant.service.js";
+import {Guard} from "../Util/Guard.js";
 
 const router = express.Router();
 
 router.get("/:station_id", async (req, res) => {
 	const renderingService = RenderingService.GetInstance();
+	const tenantService = TenantService.GetInstance();
+	const tenantId = await tenantService.GetTenantId(req);
+	Guard.AgainstNullish(tenantId);
 
-	const rendered = await renderingService.Render("pages/viz", {});
+	const opts = {
+		buildNumber: GetBuildNumber(),
+		login: await tenantService.GetTenantName(tenantId)
+	}
+
+	const rendered = await renderingService.Render("pages/viz", opts);
 
 	res.send(rendered);
 });

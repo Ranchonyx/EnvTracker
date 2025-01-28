@@ -17,14 +17,13 @@
 </head>
 <body>
 <!-- Footer include -->
-<%- include('../blocks/navbar') %>
+<%- include('../blocks/navbar', {buildNumber, login}) %>
 
 <!--
 {
-    stations: [
-        station-type,
-        station-type
-    ]
+    stations,
+    buildNumber,
+    login
 }
 -->
 <div class="wrapper">
@@ -61,10 +60,11 @@
                         </tr>
                     </table>
 
-                    <h3 class="mt-4">Empfohlene Pflanzenkulturen</h3>
-                    <ul class="list-group">
-
-                    </ul>
+                    <div class="crops">
+                        <h3 class="mt-4">Empfohlene Pflanzenkulturen</h3>
+                        <ul class="list-group crop-list">
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
