@@ -63,23 +63,34 @@
                         <h4 class="card-title mb-0">Sensor Data Visualization</h4>
 
                         <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
+                            <button class="btn btn-secondary dropdown-toggle dropdown-types-toggle" type="button" id="dropdownMenuButtonForTypes"
                                     data-bs-toggle="dropdown"
                                     aria-haspopup="true" aria-expanded="false">
                                 Messdatentyp auswählen...
                             </button>
-                            <div class="dropdown-menu dropdown-menu-types" aria-labelledby="dropdownMenuButton">
+                            <div class="dropdown-menu dropdown-menu-types" aria-labelledby="dropdownMenuButtonForTypes">
                             </div>
                         </div>
-                        <form>
-                            <label for="date-from">Von</label>
-                            <input type="date" id="date-from" name="date-from">
-                            <label for="date-to">Bis</label>
-                            <input type="date" id="date-to" name="date-to">
-                        </form>
 
-
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle dropdown-groups-toggle" type="button" id="dropdownMenuButtonForGroups"
+                                    data-bs-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
+                                Gruppierung auswählen...
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-groups" aria-labelledby="dropdownMenuButtonForGroups">
+                                <a href="#" class="dropdown-item">MINUTE</a>
+                                <a href="#" class="dropdown-item">HOUR</a>
+                                <a href="#" class="dropdown-item">HOUR_AND_MINUTE</a>
+                            </div>
+                        </div>
                     </div>
+                    <form>
+                        <label for="date-from">Von</label>
+                        <input type="date" id="date-from" name="date-from">
+                        <label for="date-to">Bis</label>
+                        <input type="date" id="date-to" name="date-to">
+                    </form>
                     <div class="card-body">
                         <!-- Add a custom class for styling -->
                         <canvas id="sensorChart" class="w-100" style="max-height: 500px;"></canvas>
