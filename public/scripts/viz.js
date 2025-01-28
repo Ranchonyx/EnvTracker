@@ -35,7 +35,6 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
     globalThis.ChartRenderer.renderMessage("Lade Messwerte...");
     const today = new Date().toISOString();
 
-
     const dateFromElement = document.querySelector("#date-from");
     const dateToElement = document.querySelector("#date-to");
 
@@ -70,9 +69,9 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
 
     const {max, min, avg} = aggregatedData;
 
-    maxValueElement.textContent = `${max} ${unit}`;
-    minValueElement.textContent = `${min} ${unit}`;
-    avgValueElement.textContent = `${avg} ${unit}`;
+    maxValueElement.textContent = `${max.toFixed(2)} ${unit}`;
+    minValueElement.textContent = `${min.max.toFixed(2)} ${unit}`;
+    avgValueElement.textContent = `${avg.max.toFixed(2)} ${unit}`;
 
 }
 
