@@ -110,7 +110,6 @@ async function SetupTypeDropdown() {
 
     //Ignore last entry "all"
     const dropdownEntries = types
-        .slice(0, -1)
         .map(entry => createDropdownEntry(entry));
 
     const dropdownMenu = document.querySelector(".dropdown-menu-types");
