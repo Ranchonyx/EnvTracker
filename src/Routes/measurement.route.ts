@@ -116,7 +116,11 @@ router.get("/:station_id/:type", async (req, res) => {
 		}
 
 		if (shouldSendAggregationData) {
-			res.send(measurementService.AggregateMeasurements(dayDataForType, req.query.aggregation!));
+			res.send({
+				max: measurementService.AggregateMeasurements(dayDataForType, "max"),
+				min: measurementService.AggregateMeasurements(dayDataForType, "min"),
+				avg: measurementService.AggregateMeasurements(dayDataForType, "avg")
+			})
 			return;
 		}
 

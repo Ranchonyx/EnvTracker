@@ -48,15 +48,8 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
 
     const unit = chartData.options.scales.y.title.text;
 
-    const [
-        max,
-        min,
-        avg
-    ] = await Promise.all([
-        await fetchMeasurement(myStationId, type, timeFrameParams, groupingParams, "max"),
-        await fetchMeasurement(myStationId, type, timeFrameParams, groupingParams, "min"),
-        await fetchMeasurement(myStationId, type, timeFrameParams, groupingParams, "avg")
-    ]);
+    const aggregatedDataRequest = await fetchMeasurement(myStationId, type, timeFrameParams, groupingParams, "max");
+    const aggregatedData = await aggregatedDataRequest.json();
 
     const maxValueElement = document.querySelector("#maxValue");
     const minValueElement = document.querySelector("#minValue");
@@ -71,6 +64,8 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
 
         return;
     }
+
+    const {max, min, avg} = aggregatedData;
 
     maxValueElement.textContent = `${max} ${unit}`;
     minValueElement.textContent = `${min} ${unit}`;
