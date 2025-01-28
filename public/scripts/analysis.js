@@ -67,15 +67,34 @@ async function RenderChartAndDisplays() {
     const chartData = await chartDataResponse.json();
     const predictionChartData = await predictionDataChartResponse.json();
 
-/*    for (let i = 0; i < predictionChartData.data.labels.length; i++) {
-        predictionChartData.data.labels[i] = `P+${i}`;
-    }*/
+    /*    for (let i = 0; i < predictionChartData.data.labels.length; i++) {
+            predictionChartData.data.labels[i] = `P+${i}`;
+        }*/
 
-    predictionChartData.data.datasets[0].backgroundColor = "rgba(255, 99, 132, 0.2)";
-    predictionChartData.data.datasets[0].borderColor = "rgba(255, 99, 132, 1)";
+    const historicalDataset = chartData.data.datasets[0];
+    const predictionDataset = predictionChartData.data.datasets[0];
 
-    predictionChartData.data.datasets[0].label = "P(Temperature)"
-    chartData.data.datasets.push(predictionChartData.data.datasets[0]);
+    predictionDataset.backgroundColor = "rgba(255, 99, 132, 0.2)";
+    predictionDataset.data.datasets[0].borderColor = "rgba(255, 99, 132, 1)";
+    predictionDataset.data.datasets[0].label = "P(Temperature)"
+
+    const mergedLabels = [...chartData.data.labels, ...predictionChartData.data.labels];
+    chartData.data.labels = mergedLabels;
+
+    // Align datasets
+    const alignedHistoricalData = [
+        ...historicalDataset.data,
+        ...new Array(predictionChartData.data.labels.length).fill(null) // Add placeholders for predictions
+    ];
+    const alignedPredictionData = [
+        ...new Array(chartData.data.labels.length - predictionDataset.data.length).fill(null), // Add placeholders before predictions
+        ...predictionDataset.data
+    ];
+
+    historicalDataset.data = alignedHistoricalData;
+    predictionDataset.data = alignedPredictionData;
+
+    chartData.data.datasets.push(predictionDataset);
 
     globalThis.ChartRenderer.render(chartData);
     statusElement.textContent = `Temperature / P(Temperature)`;
