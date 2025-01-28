@@ -160,7 +160,11 @@ document.addEventListener("DOMContentLoaded", async (ev) => {
 
     await SetupTypeDropdown();
     SetupGroupDropdown();
+    document.querySelector(".dropdown-types-toggle").textContent = "Temperature";
+    localStorage.setItem("last-type", "Temperature");
 
-    localStorage.removeItem("last-type");
+    document.querySelector(".dropdown-groups-toggle").textContent = "MINUTE_AND_HOUR";
+    localStorage.setItem("last-group", "MINUTE_AND_HOUR");
+
     globalThis.ChartRenderer = chartRenderer("#sensorChart");
 });
