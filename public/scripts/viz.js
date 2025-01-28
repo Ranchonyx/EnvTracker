@@ -153,6 +153,12 @@ function SetupGroupDropdown() {
 document.addEventListener("DOMContentLoaded", async (ev) => {
     ev.preventDefault();
 
+    document.querySelector(".dropdown-types-toggle").textContent = "Temperature";
+    localStorage.setItem("last-type", "Temperature");
+
+    document.querySelector(".dropdown-groups-toggle").textContent = "MINUTE_AND_HOUR";
+    localStorage.setItem("last-group", "MINUTE_AND_HOUR");
+
     const sc = SocketClient.getInstance(HandleWebsocketResponse);
     globalThis.sc = sc;
 
@@ -160,11 +166,6 @@ document.addEventListener("DOMContentLoaded", async (ev) => {
 
     await SetupTypeDropdown();
     SetupGroupDropdown();
-    document.querySelector(".dropdown-types-toggle").textContent = "Temperature";
-    localStorage.setItem("last-type", "Temperature");
-
-    document.querySelector(".dropdown-groups-toggle").textContent = "MINUTE_AND_HOUR";
-    localStorage.setItem("last-group", "MINUTE_AND_HOUR");
 
     globalThis.ChartRenderer = chartRenderer("#sensorChart");
 });
