@@ -71,12 +71,12 @@ router.get("/:station_id/:type", async (req, res) => {
 	if (shouldSendAllData) {
 		const allDataForType = await measurementService.QueryMeasurementsOfType(station_id, "all", type);
 		if (shouldSendChartData) {
-			const asChart = chartService.SingleChartFromMeasurement(allDataForType, req.query.chart!);
+			const asChart = await chartService.SingleChartFromMeasurement(allDataForType, req.query.chart!);
 			res.send(asChart);
 			return;
 		}
 
-		if(shouldSendAggregationData) {
+		if (shouldSendAggregationData) {
 			res.send(measurementService.AggregateMeasurements(allDataForType, req.query.aggregation!));
 			return;
 		}
@@ -87,12 +87,12 @@ router.get("/:station_id/:type", async (req, res) => {
 	if (shouldSendRangeData) {
 		const rangedDataForType = await measurementService.QueryMeasurementsOfTypeInDateRange(station_id, type, from, to, groupBy);
 		if (shouldSendChartData) {
-			const asChart = chartService.SingleChartFromMeasurement(rangedDataForType, req.query.chart!);
+			const asChart = await chartService.SingleChartFromMeasurement(rangedDataForType, req.query.chart!);
 			res.send(asChart);
 			return;
 		}
 
-		if(shouldSendAggregationData) {
+		if (shouldSendAggregationData) {
 			res.send(measurementService.AggregateMeasurements(rangedDataForType, req.query.aggregation!));
 			return;
 		}
@@ -110,12 +110,12 @@ router.get("/:station_id/:type", async (req, res) => {
 		const dayDataForType = await measurementService.QueryMeasurementsOfTypeInDateRange(station_id, type, dayStart.toISOString(), dayEnd.toISOString(), groupBy);
 
 		if (shouldSendChartData) {
-			const asChart = chartService.SingleChartFromMeasurement(dayDataForType, req.query.chart!);
+			const asChart = await chartService.SingleChartFromMeasurement(dayDataForType, req.query.chart!);
 			res.send(asChart);
 			return;
 		}
 
-		if(shouldSendAggregationData) {
+		if (shouldSendAggregationData) {
 			res.send(measurementService.AggregateMeasurements(dayDataForType, req.query.aggregation!));
 			return;
 		}
