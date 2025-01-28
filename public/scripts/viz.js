@@ -168,4 +168,5 @@ document.addEventListener("DOMContentLoaded", async (ev) => {
     SetupGroupDropdown();
 
     globalThis.ChartRenderer = chartRenderer("#sensorChart");
+    await RenderChartAndDisplays();
 });
