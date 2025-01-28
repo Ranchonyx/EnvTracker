@@ -32,7 +32,9 @@ async function fetchMeasurement(station_id, type, timeFrameParams, groupingParam
 }
 
 async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) {
+    globalThis.ChartRenderer.renderMessage("Lade Messwerte...");
     const today = new Date().toISOString();
+
 
     const dateFromElement = document.querySelector("#date-from");
     const dateToElement = document.querySelector("#date-to");
@@ -45,6 +47,7 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
     const myStationId = getStationId();
     const chartRequest = await fetch(`/measurement/${myStationId}/${type}?${timeFrameParams}${groupingParams}&chart=line`);
     const chartData = await chartRequest.json();
+    globalThis.ChartRenderer.render(chartData);
 
     const unit = chartData.options.scales.y.title.text;
 
@@ -71,7 +74,6 @@ async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) 
     minValueElement.textContent = `${min} ${unit}`;
     avgValueElement.textContent = `${avg} ${unit}`;
 
-    globalThis.ChartRenderer.render(chartData);
 }
 
 async function HandleWebsocketResponse(message) {
