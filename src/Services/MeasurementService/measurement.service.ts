@@ -72,6 +72,19 @@ export default class Service {
 			? `where CAST(timestamp as datetime) between '${this.ToMDBDate(ISOStart)}' and '${this.ToMDBDate(ISOEnd)}'`
 			: "";
 
+		let groupByClause = "";
+		switch (groupedBy) {
+			case "HOUR":
+				groupByClause = "HOUR(CAST(timestamp as datetime)) + 1";
+				break;
+			case "MINUTE":
+				groupByClause = "LPAD(MINUTE(CAST(timestamp AS DATETIME)), 2, '0')";
+				break;
+			case "HOUR_AND_MINUTE":
+			default:
+				groupByClause = "CONCAT(HOUR(CAST(timestamp as datetime)) + 1, ':', LPAD(MINUTE(CAST(timestamp AS DATETIME)), 2, '0'))";
+		}
+
 		const typeClause = pType === "all" ? "" : `m.name = '${pType}' and`;
 
 		const response = await this.mariadb.Query<Measurement<T, U>>(
@@ -89,10 +102,10 @@ export default class Service {
 						${typeClause} s.station_guid = '${station_guid}'
 				)
 				SELECT
-					name, unit, value, CONCAT(HOUR(CAST(timestamp as datetime)) + 1, ':', LPAD(MINUTE(CAST(timestamp AS DATETIME)), 2, '0')) AS timestamp
+					name, unit, value, ${groupByClause} AS timestamp
 				FROM
 					LatestData ${whereClauseOrEmptyString}
-				GROUP BY CONCAT(HOUR(CAST(timestamp as datetime)) + 1, ':', LPAD(MINUTE(CAST(timestamp AS DATETIME)), 2, '0')), name, unit
+				GROUP BY ${groupByClause}, name, unit
 			`
 		);
 

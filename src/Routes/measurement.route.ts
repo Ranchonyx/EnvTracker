@@ -30,11 +30,11 @@ router.get("/:station_id/:type", async (req, res) => {
 		from?: string;
 		to?: string;
 		forDay?: string;
-		groupedBy?: "HOUR" | "MINUTE" | "HOUR_AND_MINUTE";
+		groupBy?: "HOUR" | "MINUTE" | "HOUR_AND_MINUTE";
 	}>(req.query);
 	Guard.CastAs<AllMeasurementType>(req.params.type);
 
-	const {to, from, forDay} = req.query;
+	const {to, from, forDay, groupBy} = req.query;
 	const {station_id, type} = req.params;
 
 	const measurementService = MeasurementService.GetInstance();
@@ -60,11 +60,10 @@ router.get("/:station_id/:type", async (req, res) => {
 	}
 
 	if (shouldSendRangeData) {
-		const rangedDataForType = await measurementService.QueryMeasurementsOfTypeInDateRange(station_id, type, from, to);
+		const rangedDataForType = await measurementService.QueryMeasurementsOfTypeInDateRange(station_id, type, from, to, groupBy);
 		res.send(rangedDataForType);
 		return;
 	}
-
 
 	if (shouldSendDayData) {
 		const dayStart = new Date(forDay);
@@ -73,7 +72,7 @@ router.get("/:station_id/:type", async (req, res) => {
 		const dayEnd = new Date(forDay);
 		dayEnd.setHours(24, 59, 59, 999);
 
-		const dayDataForType = await measurementService.QueryMeasurementsOfTypeInDateRange(station_id, type, dayStart.toISOString(), dayEnd.toISOString());
+		const dayDataForType = await measurementService.QueryMeasurementsOfTypeInDateRange(station_id, type, dayStart.toISOString(), dayEnd.toISOString(), groupBy);
 		res.send(dayDataForType);
 		return;
 	}
