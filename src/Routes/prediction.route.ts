@@ -38,7 +38,7 @@ router.get("/:station_id/predict", async (req, res) => {
 	res.send(withOffsets);
 });
 
-router.get("/:station_id/predictChart", async (req, res) => {
+/*router.get("/:station_id/predictChart", async (req, res) => {
 	const measurementService = MeasurementService.GetInstance();
 	const predictionService = await PredictionService.GetInstance();
 	const modelService = await predictionService.GetPredictionService(req.params.station_id);
@@ -87,6 +87,6 @@ router.get("/:station_id/predictChart", async (req, res) => {
 	chart.data.datasets.push(predictionDataset);
 
 	res.send(chart);
-});
+});*/
 
 export default router;
