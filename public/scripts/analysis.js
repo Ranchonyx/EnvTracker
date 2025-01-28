@@ -75,8 +75,8 @@ async function RenderChartAndDisplays() {
     const predictionDataset = predictionChartData.data.datasets[0];
 
     predictionDataset.backgroundColor = "rgba(255, 99, 132, 0.2)";
-    predictionDataset.data.datasets[0].borderColor = "rgba(255, 99, 132, 1)";
-    predictionDataset.data.datasets[0].label = "P(Temperature)"
+    predictionDataset.borderColor = "rgba(255, 99, 132, 1)";
+    predictionDataset.label = "P(Temperature)";
 
     const mergedLabels = [...chartData.data.labels, ...predictionChartData.data.labels];
     chartData.data.labels = mergedLabels;
