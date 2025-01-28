@@ -18,7 +18,7 @@ router.post("/:station_id/transform", async (req, res) => {
 	const label = measurementData[0].name;
 
 	const dataset = await chartService.CreateDataset(label, measurementData.map(e => e.value));
-	const chartData = await chartService.CreateChart(measurementData.map(e => e.timestamp), [dataset], label, unit);
+	const chartData = await chartService.CreateChart(measurementData.map(e => e.timestamp), [dataset], label, unit, "line");
 
 	res.send(chartData);
 })
