@@ -125,7 +125,7 @@ class PredictionService {
 
 			// Output layer (predicts the next temperature)
 			instance.model.add(tf.layers.dense({
-				units: 1,  // Output a single value (predicted temperature)
+				units: 8,  // Output a single value (predicted temperature)
 			}));
 
 			// Compile the model
