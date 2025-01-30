@@ -36,14 +36,7 @@ async function UpdateRecommendedCrops(measurements) {
     while (cropList.children.length > 0)
         cropList.removeChild(cropList.firstChild);
 
-    const recommendedCrops = await fetch(`/crop/${sessionStorage.getItem("last-station")}/recommendCrops`, {
-        method: "POST",
-        body: JSON.stringify(measurements),
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-    })
+    const recommendedCrops = await fetch(`/crop/${sessionStorage.getItem("last-station")}/recommendCrops`);
 
     const crops = await recommendedCrops.json();
 
