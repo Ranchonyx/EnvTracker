@@ -215,7 +215,7 @@ export default class WebServer {
 				res.cookie("X-WEBSOCKET-ACCESS-TOKEN", this.wsTokenStore.RequestToken({
 					id: username,
 					password: password
-				}, 3.6e+6));
+				}));
 
 				res.cookie("X-CONNECTION-ID", req.session.id);
 				return res.redirect(this.homepage);
