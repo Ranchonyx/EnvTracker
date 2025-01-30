@@ -4,7 +4,7 @@ import MeasurementService from "../Services/MeasurementService/measurement.servi
 
 const router = express.Router();
 
-router.post("/:station_id/recommendCrops", async (req, res) => {
+router.get("/:station_id/recommendCrops", async (req, res) => {
 	const cropService = CropService.GetInstance();
 	const measurementService = MeasurementService.GetInstance();
 
