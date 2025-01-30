@@ -169,6 +169,17 @@ export default class Service {
 	}
 
 	/*
+	* Get aggregated measurements (max, min, avg)
+	* */
+	public GetAggregatedMeasurements<T extends AllMeasurementType, U extends AllMeasurementUnit>(pMeasurements: Array<Measurement<T, U>>) {
+		return {
+			max: this.AggregateMeasurements(pMeasurements, "max"),
+			min: this.AggregateMeasurements(pMeasurements, "min"),
+			avg: this.AggregateMeasurements(pMeasurements, "avg")
+		}
+	}
+
+	/*
 	* Alle verfügbaren Messwert-Typen abfragen
 	* */
 	public async QueryAvailableMeasurementTypes(): Promise<Array<AllMeasurementType>> {

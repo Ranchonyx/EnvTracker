@@ -26,9 +26,8 @@ function getStationId() {
     return sessionStorage.getItem("last-station");
 }
 
-async function fetchMeasurement(station_id, type, timeFrameParams, groupingParams, aggregation = undefined) {
-    const aggregationParams = aggregation ? `&aggregation=${aggregation}` : ""
-    return await fetch(`/measurement/${station_id}/${type}?${timeFrameParams}${groupingParams}${aggregationParams}`);
+async function fetchMeasurement(station_id, type, timeFrameParams, groupingParams) {
+    return await fetch(`/measurement/${station_id}/${type}?${timeFrameParams}${groupingParams}&aggregation=true`);
 }
 
 async function RenderChartAndDisplays(type = localStorage.getItem("last-type")) {
