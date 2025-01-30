@@ -1,21 +1,23 @@
 import express from "express";
-import {Measurement, QueryStationStatusResponse} from "../WebUI/DBResponses.js";
-import Service from "../Services/CropService/crop.service.js";
+import CropService from "../Services/CropService/crop.service.js";
+import MeasurementService from "../Services/MeasurementService/measurement.service.js";
 
 const router = express.Router();
 
 router.post("/:station_id/recommendCrops", async (req, res) => {
-	const brief: Array<Measurement<"Temperature" | "Humidity" | "Pressure", "°C" | "hPa" | "%">> = req.body;
-	const cropService = Service.GetInstance();
+	const cropService = CropService.GetInstance();
+	const measurementService = MeasurementService.GetInstance();
 
-	const temperature = brief.find(b => b.name = "Temperature");
-	const humidity = brief.find(b => b.name = "Humidity");
-	const pressure = brief.find(b => b.name = "Pressure");
+	const brief = await measurementService.QueryStatusForStation(req.params.station_id);
+
+	const temperature = brief.find(b => b.name = "Temperature")!;
+	const humidity = brief.find(b => b.name = "Humidity")!;
+	const pressure = brief.find(b => b.name = "Pressure")!;
 
 	const recommendedCrops = cropService.RecommendCropsFor({
-		temperature: temperature?.value || 0,
-		humidity: humidity?.value || 0,
-		pressure: pressure?.value || 0
+		temperature: temperature.value || 0,
+		humidity: humidity.value || 0,
+		pressure: pressure.value || 0
 	});
 
 	res.send(recommendedCrops);
