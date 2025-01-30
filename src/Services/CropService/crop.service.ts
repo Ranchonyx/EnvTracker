@@ -1,5 +1,7 @@
 import {RegisteredLogger} from "../../Logger/Logger.js";
 import MariaDBConnector from "../../MariaDBConnector/MariaDBConnector.js";
+import {MemoizeSync} from "../../Util/Memo.js";
+import {SyncMemo} from "../../Util/Decorators.js";
 
 type CropDbEntry = {
 	name: string;
@@ -22,9 +24,9 @@ type EnvRecord = {
 export default class Service {
 	private static instance: Service | undefined;
 
-	public CropDatabase: Array<CropDbEntry> = [
+	private CropDatabase: Array<CropDbEntry> = [
 		{
-			name: "Wheat",
+			name: "Weizen",
 			conditions: {
 				minTemp: 10,
 				maxTemp: 25,
@@ -35,7 +37,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Barley",
+			name: "Gerste",
 			conditions: {
 				minTemp: 8,
 				maxTemp: 20,
@@ -46,7 +48,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Rye",
+			name: "Roggen",
 			conditions: {
 				minTemp: 5,
 				maxTemp: 22,
@@ -57,7 +59,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Potatoes",
+			name: "Kartoffeln",
 			conditions: {
 				minTemp: 12,
 				maxTemp: 22,
@@ -68,7 +70,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Sugar Beet",
+			name: "Zuckerrüben",
 			conditions: {
 				minTemp: 12,
 				maxTemp: 25,
@@ -79,7 +81,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Corn (Maize)",
+			name: "Mais",
 			conditions: {
 				minTemp: 15,
 				maxTemp: 30,
@@ -90,7 +92,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Rapeseed (Canola)",
+			name: "Raps",
 			conditions: {
 				minTemp: 8,
 				maxTemp: 20,
@@ -101,7 +103,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Carrots",
+			name: "Karotten",
 			conditions: {
 				minTemp: 10,
 				maxTemp: 20,
@@ -112,18 +114,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Apples",
-			conditions: {
-				minTemp: 5,
-				maxTemp: 20,
-				minHumidity: 50,
-				maxHumidity: 80,
-				minPressure: 1010,
-				maxPressure: 1025,
-			}
-		},
-		{
-			name: "Strawberries",
+			name: "Erdbeeren",
 			conditions: {
 				minTemp: 12,
 				maxTemp: 25,
@@ -134,7 +125,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Cabbage",
+			name: "Kohl",
 			conditions: {
 				minTemp: 5,
 				maxTemp: 18,
@@ -145,7 +136,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Onions",
+			name: "Zwiebeln",
 			conditions: {
 				minTemp: 10,
 				maxTemp: 25,
@@ -156,7 +147,7 @@ export default class Service {
 			}
 		},
 		{
-			name: "Peas",
+			name: "Erbsen",
 			conditions: {
 				minTemp: 8,
 				maxTemp: 18,
@@ -181,30 +172,47 @@ export default class Service {
 		return Service.instance!;
 	}
 
-	/*
-	* Prüfe, ob ein Eintrag der CropDb für die gegebenen Wetterbedingungen passend ist
-	* */
-	public IsCropSuitableFor(crop: CropDbEntry, conditions: EnvRecord) {
+	private NormalizeTanh(value: number, spread = 10): number {
+		return Math.tanh(value / spread);
+	}
+	@SyncMemo("ComputeDeviation")
+	private ComputeDeviation(min: number, max: number, val: number): number {
+		return Math.max(min - val, 0) + Math.max(val - max, 0);
+	}
+
+	@SyncMemo("ComputeCropScore")
+	private ComputeCropScore(crop: CropDbEntry, conditions: EnvRecord): number {
 		const {minTemp, maxTemp, minHumidity, maxHumidity, minPressure, maxPressure} = crop.conditions;
-		return (
-			conditions.temperature >= minTemp &&
-			conditions.temperature <= maxTemp &&
-			conditions.humidity >= minHumidity &&
-			conditions.humidity <= maxHumidity &&
-			conditions.pressure >= minPressure &&
-			conditions.pressure <= maxPressure
-		);
+
+		const tempDeviation = this.ComputeDeviation(minTemp, maxTemp, conditions.temperature);
+		const humidityDeviation = this.ComputeDeviation(minHumidity, maxHumidity, conditions.humidity);
+		const pressureDeviation = this.ComputeDeviation(minPressure, maxPressure, conditions.pressure);
+
+		return tempDeviation + humidityDeviation + (pressureDeviation * 0.6);
+	}
+
+	@SyncMemo("RankCrops")
+	private RankCrops(environmentalData: EnvRecord): Array<{ name: string, score: number }> {
+		return this.CropDatabase
+			.map(e => {
+				return {
+					score: this.NormalizeTanh(this.ComputeCropScore(e, environmentalData)),
+					name: e.name
+				}
+			})
+			.sort((a, b) => a.score - b.score);
 	}
 
 	/*
 	* Ein Array an Nutzpflanzen zurückgeben, die für einen gegebenen Datensatz an Wetterdaten passend sind
 	* */
-	public RecommendCropsFor(environmentalData: EnvRecord) {
-		const suitableCrops = this.CropDatabase.filter((crop) =>
+	public RecommendCropsFor(environmentalData: EnvRecord, limit: number = 5) {
+		const suitableCrops = this.RankCrops(environmentalData).slice(0, limit);
+		/*const suitableCrops = this.CropDatabase.filter((crop) =>
 			this.IsCropSuitableFor(crop, environmentalData)
-		);
+		);*/
 
-		this.log(`Suitable crops for ${JSON.stringify(environmentalData)}: ${suitableCrops.join(", ")}`);
+		this.log(`Suitable crops for ${JSON.stringify(environmentalData)}: ${suitableCrops.map(e => `${e.name}::${e.score}`).join(", ")}`);
 		return suitableCrops.map(crop => crop.name);
 	}
 }

@@ -51,6 +51,12 @@ h3 {
     font-size: 2rem;
 }
 
-.crop-list {
+.crop-icon {
+    padding-right: 10px;
+    height: 1.5em;
+    width: 1.5em;
+}
 
+.crop-list {
+    font-weight: bold;
 }
