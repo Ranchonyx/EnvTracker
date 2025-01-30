@@ -10,9 +10,9 @@ router.get("/:station_id/recommendCrops", async (req, res) => {
 
 	const brief = await measurementService.QueryStatusForStation(req.params.station_id);
 
-	const temperature = brief.find(b => b.name = "Temperature")!;
-	const humidity = brief.find(b => b.name = "Humidity")!;
-	const pressure = brief.find(b => b.name = "Pressure")!;
+	const temperature = brief.find(b => b.name === "Temperature")!;
+	const humidity = brief.find(b => b.name === "Humidity")!;
+	const pressure = brief.find(b => b.name === "Pressure")!;
 
 	const recommendedCrops = cropService.RecommendCropsFor({
 		temperature: temperature.value || 0,
