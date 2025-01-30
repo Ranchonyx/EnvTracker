@@ -1,6 +1,7 @@
 /logs/
 node_modules/
 .idea/
+models/
 
 /dist/*
 !/dist/.gitkeep
