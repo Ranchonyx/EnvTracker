@@ -175,6 +175,7 @@ export default class Service {
 	private NormalizeTanh(value: number, spread = 10): number {
 		return Math.tanh(value / spread);
 	}
+
 	@SyncMemo("ComputeDeviation")
 	private ComputeDeviation(min: number, max: number, val: number): number {
 		return Math.max(min - val, 0) + Math.max(val - max, 0);

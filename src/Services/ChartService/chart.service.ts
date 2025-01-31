@@ -99,7 +99,7 @@ export default class Service {
 					}
 				],
 				scales: {
-					x: {title: {display: true, text: xAxisLabel}},
+					x: {title: {display: true, text: "Zeit"}},
 					y: {title: {display: true, text: yAxisLabel}}
 				}
 			}
