@@ -120,11 +120,11 @@ export default class Service {
 				SELECT
 					name, unit, value, ${groupByClause} AS timestamp
 				FROM
-					LatestData ${whereClauseOrEmptyString}
+					LatestData m ${whereClauseOrEmptyString}
 				GROUP BY
 					${groupByClause}, name, unit
 				ORDER BY
-					CAST(timestamp as datetime)
+					CAST(m.timestamp as datetime)
 			`
 		);
 
