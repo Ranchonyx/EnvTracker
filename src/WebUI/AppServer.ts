@@ -106,6 +106,19 @@ export default class AppServer {
 		//Start the websocket auth and pub/sub server
 		await this.StartWebsockets(ws);
 
+		app.use(async (req, res, next) => {
+			if(req.path === "/home") {
+				return next();
+			}
+
+			const station_id = req.params.station_id;
+			if(!station_id) {
+				return res.status(401).redirect("/");
+			}
+
+			next();
+		});
+
 		//Mount all routes...
 		app.use("/stations", StationsRoute);
 		app.use("/home", HomeRoute);
