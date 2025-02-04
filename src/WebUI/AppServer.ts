@@ -26,7 +26,6 @@ import MeasurementRoute from "../Routes/measurement.route.js";
 import ChartRoute from "../Routes/chart.route.js";
 import PredictionServiceRegistry from "../Services/PredictionService/prediction.service.js";
 import PredictionRoute from "../Routes/prediction.route.js";
-import {AllMeasurementType} from "../Util/MeasurementUtil.js";
 import AnalysisRoute from "../Routes/analysis.route.js";
 import CropRoute from "../Routes/crop.route.js";
 import CropService from "../Services/CropService/crop.service.js";
@@ -105,19 +104,6 @@ export default class AppServer {
 
 		//Start the websocket auth and pub/sub server
 		await this.StartWebsockets(ws);
-
-		app.use(async (req, res, next) => {
-			if(req.path === "/home") {
-				return next();
-			}
-
-			const station_id = req.params.station_id;
-			if(!station_id) {
-				return res.status(401).redirect("/");
-			}
-
-			next();
-		});
 
 		//Mount all routes...
 		app.use("/stations", StationsRoute);
