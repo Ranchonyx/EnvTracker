@@ -49,6 +49,12 @@ export default class SocketReceiver extends EventEmitter implements ISocketRecei
 				const transmission = new TalkTransmission(socket, tId, this.mdb_api);
 				transmission.Attach();
 
+				transmission.on("error", () => {
+					console.warn("Erroneous transmission removed.");
+					const myIdx = this.transmissions.findIndex(tr => tr.tId === tId);
+					this.transmissions.splice(myIdx, 1);
+				});
+
 				transmission.on("data_available", (station_id: string, data: Buffer) => {
 					const myIdx = this.transmissions.findIndex(tr => tr.tId === tId);
 					const oldTransmission = this.transmissions.splice(myIdx, 1);

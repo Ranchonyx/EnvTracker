@@ -5,6 +5,7 @@ import MariaDBConnector from "../MariaDBConnector/MariaDBConnector.js";
 
 export interface ITalkTransmissionEvents {
 	"data_available": (id: number, data: Buffer) => void;
+	"error": () => void;
 }
 
 export interface ITalkTransmission {
@@ -87,6 +88,10 @@ export default class TalkTransmission extends EventEmitter implements ITalkTrans
 		this.socket = pSocket;
 		this.id = pId;
 		this.station_id = "";
+		
+		pSocket.on("error", (err: Error) => {
+			this.emit("error");
+		});
 	}
 
 	//#region Basic Socket actions
