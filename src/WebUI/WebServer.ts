@@ -177,6 +177,7 @@ export default class WebServer {
 			//routen, die kein auth benötigen
 			const openRoutes = ["/auth", "/", "/favicon.ico"]
 			//Falls die route nicht /auth oder / ist
+			console.warn(req.path);
 			if (!openRoutes.includes(req.path)) {
 				//Und die session nicht eingeloggt ist, wird nach / redirected
 
