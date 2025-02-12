@@ -175,7 +175,7 @@ export default class WebServer {
 			Guard.CastAs<Record<"loggedIn" | "username", any>>(req.session);
 
 			//routen, die kein auth benötigen
-			const openRoutes = ["/auth", "/"]
+			const openRoutes = ["/auth", "/", "/favicon.ico"]
 			//Falls die route nicht /auth oder / ist
 			if (!openRoutes.includes(req.path)) {
 				//Und die session nicht eingeloggt ist, wird nach / redirected
