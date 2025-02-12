@@ -10,6 +10,7 @@ import MariaDBSessionStore from "./WebUI/MariaDBSessionStore.js";
 import AppServer from "./WebUI/AppServer.js";
 import SocketReceiver from "./TCPSocketReceiver/TCPSocketReceiver.js";
 import {
+	AllMeasurementType,
 	TryParseMeasurementString
 } from "./Util/MeasurementUtil.js";
 import EventBus from "./EventBus/EventBus.js";
@@ -107,9 +108,48 @@ const srv = new SocketReceiver(8787, socketSrvLogger, async (station_id, data) =
 
 		for (const record of recordArray.records) {
 			await sensorService.AddSensorMeasurement(station_id, sensorName, record);
-
 			await wire.dispatch("new-record", `${station_id}|${record.name}`);
 		}
 	}
 }, mariadb);
 srv.Start();
+
+/*
+const thresholdMap: Record<AllMeasurementType, {
+	min: number;
+	max: number;
+}> = {
+	Temperature: {
+		max: 50,
+		min: -20
+	},
+	Altitude: {
+		max: 3000,
+		min: -50
+	},
+	Humidity: {
+		max: 100,
+		min: 20
+	},
+	pm2p5: {
+		max: 10000,
+		min: 0
+	},
+	pm4p0: {
+		max: 10000,
+		min: 0
+	},
+	pm10: {
+		max: 10000,
+		min: 0
+	},
+	pm1p0: {
+		max: 10000,
+		min: 0
+	},
+	Pressure: {
+		max: 1200,
+		min: 800,
+	}
+
+}*/

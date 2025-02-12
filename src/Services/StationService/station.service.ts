@@ -5,6 +5,7 @@ import {
 } from "../../WebUI/DBResponses.js";
 import {Guard} from "../../Util/Guard.js";
 import MariaDBConnector from "../../MariaDBConnector/MariaDBConnector.js";
+import MeasurementService from "../MeasurementService/measurement.service.js"
 
 export default class Service {
 	private static instance: Service | undefined;
@@ -26,7 +27,7 @@ export default class Service {
 	* Alle im System verfügbaren Stations-IDs abrufen
 	* */
 	public async QueryAllStationIds(): Promise<Array<string>> {
-		const queriedStationIds = await this.mariadb.Query<{station_id: string}>(
+		const queriedStationIds = await this.mariadb.Query<{ station_id: string }>(
 			`select
 						guid as station_id
 					from
@@ -54,9 +55,21 @@ export default class Service {
 			`);
 
 		Guard.AgainstNullish(queriedStationData);
+
+		const mService = MeasurementService.GetInstance();
+		const withBattery = await Promise.all(...[queriedStationData
+			.map(async station => {
+				const resp = await mService.QueryStatusForStation(station.StationGuid);
+
+				const batStatus = resp.find(r => r.name === "Battery Voltage");
+				station.StationBattery = batStatus?.value!;
+
+				return station;
+			})]);
+
 		this.log(`Queried stations for ${tenant_id}`);
 
-		return queriedStationData;
+		return withBattery;
 	}
 
 	/*
@@ -64,7 +77,8 @@ export default class Service {
 	* */
 	public async QueryStation(station_guid: string): Promise<QueryStationResponse> {
 		const queryStationsResponse = await this.mariadb.Query<QueryStationResponse>(
-			`select
+			`
+					select
 						s.name as StationName, s.location as StationLocation, s.description as StationDescription, s.battery as StationBattery, s.guid as StationGuid, s.serial_number as StationSerialNumber, s.solar_panel as StationSolarPanel, s.status_flags as StationStatusFlags
 					from
 						station0 s
